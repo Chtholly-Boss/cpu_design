@@ -1,2 +1,2 @@
 # cpu_design
-Learning of Design CPU yourself
+Learning Record of Design CPU yourself
