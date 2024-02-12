@@ -201,8 +201,8 @@ module id (input wire rst,
                         wreg_o <= `WriteEnable;
                         aluop_o <= `EXE_SLL_OP;
                         alusel_o <= `EXE_RES_SHIFT;
-                        reg1_read_o <= `ReadDisable;
-                        reg2_read_o <= `ReadEnable;
+                        reg1_re_o <= `ReadDisable;
+                        reg2_re_o <= `ReadEnable;
                         imm[4:0] <= inst_i[10:6];
                         wd_o <= inst_i[15:11];
                         instvalid <= `InstValid;
@@ -212,8 +212,8 @@ module id (input wire rst,
                         wreg_o <= `WriteEnable;
                         aluop_o <= `EXE_SRL_OP;
                         alusel_o <= `EXE_RES_SHIFT;
-                        reg1_read_o <= `ReadDisable;
-                        reg2_read_o <= `ReadEnable;
+                        reg1_re_o <= `ReadDisable;
+                        reg2_re_o <= `ReadEnable;
                         imm[4:0] <= inst_i[10:6];
                         wd_o <= inst_i[15:11];
                         instvalid <= `InstValid;
@@ -223,8 +223,8 @@ module id (input wire rst,
                         wreg_o <= `WriteEnable;
                         aluop_o <= `EXE_SRA_OP;
                         alusel_o <= `EXE_RES_SHIFT;
-                        reg1_read_o <= `ReadDisable;
-                        reg2_read_o <= `ReadEnable;
+                        reg1_re_o <= `ReadDisable;
+                        reg2_re_o <= `ReadEnable;
                         imm[4:0] <= inst_i[10:6];
                         wd_o <= inst_i[15:11];
                         instvalid <= `InstValid;
@@ -259,10 +259,10 @@ module id (input wire rst,
         if (rst == `RstEnable) begin
             reg2_o <= `ZeroWord;
             end else if (reg2_re_o == `ReadEnable && ex_wreg_i == `WriteEnable
-            && reg2_addr_o == ex_wreg_i) begin
+            && reg2_addr_o == ex_wd_i) begin
             reg2_o <= ex_wdata_i;
             end else if (reg2_re_o == `ReadEnable && mem_wreg_i == `WriteEnable
-            && reg2_addr_o == mem_wreg_i) begin
+            && reg2_addr_o == mem_wd_i) begin
             reg2_o <= mem_wdata_i;
             end else if (reg2_re_o == `ReadEnable) begin
             reg2_o <= reg2_data_i;

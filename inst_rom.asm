@@ -5,25 +5,37 @@ inst_rom.om:     file format elf32-tradbigmips
 Disassembly of section .text:
 
 00000000 <_start>:
-   0:	34011100 	li	at,0x1100
-   4:	34210020 	ori	at,at,0x20
-   8:	34214400 	ori	at,at,0x4400
-   c:	34210044 	ori	at,at,0x44
+   0:	3c020404 	lui	v0,0x404
+   4:	34420404 	ori	v0,v0,0x404
+   8:	34070007 	li	a3,0x7
+   c:	34050005 	li	a1,0x5
+  10:	34080008 	li	t0,0x8
+  14:	0000000f 	sync
+  18:	00021200 	sll	v0,v0,0x8
+  1c:	00e21004 	sllv	v0,v0,a3
+  20:	00021202 	srl	v0,v0,0x8
+  24:	00a21006 	srlv	v0,v0,a1
+  28:	00000000 	nop
+  2c:	000214c0 	sll	v0,v0,0x13
+  30:	00000040 	ssnop
+  34:	00021403 	sra	v0,v0,0x10
+  38:	01021007 	srav	v0,v0,t0
+  3c:	00000000 	nop
 
 Disassembly of section .reginfo:
 
-00000010 <.reginfo>:
-  10:	00000002 	srl	zero,zero,0x0
+00000040 <.reginfo>:
+  40:	000001a4 	0x1a4
 	...
 
 Disassembly of section .MIPS.abiflags:
 
-00000028 <.MIPS.abiflags>:
-  28:	00002001 	movf	a0,zero,$fcc0
-  2c:	01010001 	movt	zero,t0,$fcc0
+00000058 <.MIPS.abiflags>:
+  58:	00002001 	movf	a0,zero,$fcc0
+  5c:	01010001 	movt	zero,t0,$fcc0
 	...
-  38:	00000001 	movf	zero,zero,$fcc0
-  3c:	00000000 	nop
+  68:	00000001 	movf	zero,zero,$fcc0
+  6c:	00000000 	nop
 
 Disassembly of section .gnu.attributes:
 

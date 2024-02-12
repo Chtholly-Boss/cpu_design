@@ -22,7 +22,7 @@ module regfile (input wire clk,
     end
     
     /*** Read logic ***/
-    always @(posedge clk) begin
+    always @(* ) begin
         if (rst == `RstEnable) begin
             rdata_1 <= `ZeroWord;
             end else if (raddr_1 == `RegNumLog2'h0) begin
@@ -36,7 +36,7 @@ module regfile (input wire clk,
             rdata_1 <= `ZeroWord;
         end
         
-        always @(posedge clk) begin
+        always @(* ) begin
             if (rst == `RstEnable) begin
                 rdata_2 <= `ZeroWord;
                 end else if (raddr_2 == `RegNumLog2'h0) begin
