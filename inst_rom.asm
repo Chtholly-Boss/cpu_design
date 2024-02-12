@@ -6,14 +6,14 @@ Disassembly of section .text:
 
 00000000 <_start>:
    0:	34011100 	li	at,0x1100
-   4:	34020020 	li	v0,0x20
-   8:	3403ff00 	li	v1,0xff00
-   c:	3404ffff 	li	a0,0xffff
+   4:	34210020 	ori	at,at,0x20
+   8:	34214400 	ori	at,at,0x4400
+   c:	34210044 	ori	at,at,0x44
 
 Disassembly of section .reginfo:
 
 00000010 <.reginfo>:
-  10:	0000001e 	0x1e
+  10:	00000002 	srl	zero,zero,0x0
 	...
 
 Disassembly of section .MIPS.abiflags:
