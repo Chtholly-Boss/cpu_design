@@ -11,18 +11,45 @@ module ex (input wire rst,
            output reg [`RegBus] wdata_o);
     /*** Definition ***/
     reg[`RegBus] logicout;
-    /*** Compute Based on aluop_i ***/
+    reg[`RegBus] shiftRes;
+    /*** Compute logicout Based on aluop_i ***/
     always @(*) begin
         if (rst == `RstEnable) begin
             logicout <= `ZeroWord;
             end else begin
             case (aluop_i)
-                /*** Logic OR ***/
-                `EXE_OR_OP: begin
+                `EXE_OR_OP,`EXE_ORI_OP: begin
                     logicout <= reg1_i | reg2_i;
+                end
+                `EXE_AND_OP,`EXE_ANDI_OP:begin
+                    logicout <= reg1_i & reg2_i;
+                end
+                `EXE_XOR_OP,`EXE_XORI_OP:begin
+                    logicout <= reg1_i ^ reg2_i;
+                end
+                `EXE_NOR_OP:begin
+                    logicout <= ~(reg1_i | reg2_i);
                 end
                 default: begin
                     logicout <= `ZeroWord;
+                end
+            endcase
+        end
+    end
+    /*** Compute Shift result Based on aluop_i ***/
+    always @( *) begin
+        if (rst == `RstEnable) begin
+            shiftRes <= `ZeroWord;
+        end else begin
+            case (aluop_i)
+                `EXE_SLL_OP,`EXE_SLLV_OP:begin
+                    shiftRes <= reg2_i << reg1_i[4:0];
+                end
+                `EXE_SRL_OP,`EXE_SRLV_OP:begin
+                    shiftRes <= reg2_i >> reg1_i[4:0];
+                end
+                `EXE_SRA_OP,`EXE_SRAV_OP:begin
+                    shiftRes <= ({32{reg2_i[31]}} << (6'd32 - {1'b0,reg1_i[4:0]})) | (reg2_i >> reg1_i[4:0]);
                 end
             endcase
         end
@@ -34,6 +61,9 @@ module ex (input wire rst,
         case (alusel_i)
             `EXE_RES_LOGIC: begin
                 wdata_o <= logicout;
+            end
+            `EXE_RES_SHIFT:begin
+                wdata_o <= shiftRes;
             end
             default: begin
                 wdata_o <= `ZeroWord;
