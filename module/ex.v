@@ -23,7 +23,7 @@ module ex (input wire rst,
 
            output  reg [`RegBus] hi_o,
            output reg [`RegBus] lo_o,
-           output reg whilo_o,
+           output reg whilo_o
            );
     /*** Definition ***/
     reg[`RegBus] logicout;

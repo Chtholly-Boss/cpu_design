@@ -7,7 +7,7 @@ module ex_mem (input wire rst,
                input wire [`RegBus] ex_wdata,
                output reg [`RegAddrBus] mem_wd,
                output reg mem_wreg,
-               output reg [`RegBus] mem_wdata 
+               output reg [`RegBus] mem_wdata,
                input wire ex_whilo,
                input wire [`RegBus] ex_hi,
                input wire [`RegBus] ex_lo,

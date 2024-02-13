@@ -67,11 +67,8 @@ module openmips (input wire rst,
     assign rom_addr_o = pc;
     
     /*** Connection with HILO ***/
-    wire hilo_we;
-    wire [`RegBus] hi_i;
-    wire [`RegBus] lo_i;
     wire [`RegBus] hi_o;
-    wire [`RegBus] hi_o;
+    wire [`RegBus] lo_o;
     /*** Instantiate the modules ***/
     /*** Instruction Fetch ***/
     pc_reg  u_pc_reg (

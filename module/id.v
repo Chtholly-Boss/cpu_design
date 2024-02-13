@@ -104,7 +104,7 @@ module id (input wire rst,
                                     reg2_re_o <= `ReadEnable;
                                     instvalid <= `InstValid;
                                     
-                                    if (reg2_o ! = `ZeroWord) begin
+                                    if (reg2_o != `ZeroWord) begin
                                         wreg_o <= `WriteEnable;
                                         end else begin
                                             wreg_o <= `WriteDisable;

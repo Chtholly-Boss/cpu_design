@@ -10,9 +10,9 @@ module mem (input wire rst,
             input wire [`RegBus] hi_i,
             input wire [`RegBus] lo_i,
             input wire whilo_i,
-            output wire [`RegBus] hi_o,
-            output wire [`RegBus] lo_o,
-            output wire whilo_o);
+            output reg [`RegBus] hi_o,
+            output reg [`RegBus] lo_o,
+            output reg whilo_o);
     always @(*) begin
         if (rst == `RstEnable) begin
             wd_o    <= `NOPRegAddr;
