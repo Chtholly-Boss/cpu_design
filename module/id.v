@@ -306,7 +306,9 @@ module id (input wire rst,
                             reg2_re_o <= `ReadEnable;
                             instvalid <= `InstValid;
                         end
-                        default:
+                        default:begin
+                            
+                        end
                     endcase
                 end
                 /*** Logic Instruction ***/

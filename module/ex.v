@@ -113,12 +113,11 @@ module ex (input wire rst,
     end
     
     /*** Compute Arithmetic Results Based on aluop ***/
-    wire [`RegBus] arithmeticres;
+    reg [`RegBus] arithmeticres;
     wire          ov_sum;
     
     wire          reg1_eq_reg2;
     wire          reg1_lt_reg2;
-    reg[`RegBus]  arithmeticres;
     wire[`RegBus] reg2_i_mux;
     wire[`RegBus] reg1_i_not;
     wire[`RegBus] result_sum;
@@ -194,22 +193,22 @@ module ex (input wire rst,
                 end
                 
                 `EXE_CLO_OP                           :begin
-                    arithmeticres <= reg1_i[31]  ? 0  : reg1_i[30] ? 1 :
-                    reg1_i[29] ? 2  : reg1_i[28] ? 3 :
-                    reg1_i[27] ? 4  : reg1_i[26] ? 5 :
-                    reg1_i[25] ? 6  : reg1_i[24] ? 7 :
-                    reg1_i[23] ? 8  : reg1_i[22] ? 9 :
-                    reg1_i[21] ? 10 : reg1_i[20] ? 11 :
-                    reg1_i[19] ? 12 : reg1_i[18] ? 13 :
-                    reg1_i[17] ? 14 : reg1_i[16] ? 15 :
-                    reg1_i[15] ? 16 : reg1_i[14] ? 17 :
-                    reg1_i[13] ? 18 : reg1_i[12] ? 19 :
-                    reg1_i[11] ? 20 : reg1_i[10] ? 21 :
-                    reg1_i[9]  ? 22 : reg1_i[8]  ? 23 :
-                    reg1_i[7]  ? 24 : reg1_i[6]  ? 25 :
-                    reg1_i[5]  ? 26 : reg1_i[4]  ? 27 :
-                    reg1_i[3]  ? 28 : reg1_i[2]  ? 29 :
-                    reg1_i[1]  ? 30 : reg1_i[0]  ? 31 : 32;
+                    arithmeticres <= reg1_i_not[31]  ? 0  : reg1_i_not[30] ? 1 :
+                    reg1_i_not[29] ? 2  : reg1_i_not[28] ? 3 :
+                    reg1_i_not[27] ? 4  : reg1_i_not[26] ? 5 :
+                    reg1_i_not[25] ? 6  : reg1_i_not[24] ? 7 :
+                    reg1_i_not[23] ? 8  : reg1_i_not[22] ? 9 :
+                    reg1_i_not[21] ? 10 : reg1_i_not[20] ? 11 :
+                    reg1_i_not[19] ? 12 : reg1_i_not[18] ? 13 :
+                    reg1_i_not[17] ? 14 : reg1_i_not[16] ? 15 :
+                    reg1_i_not[15] ? 16 : reg1_i_not[14] ? 17 :
+                    reg1_i_not[13] ? 18 : reg1_i_not[12] ? 19 :
+                    reg1_i_not[11] ? 20 : reg1_i_not[10] ? 21 :
+                    reg1_i_not[9]  ? 22 : reg1_i_not[8]  ? 23 :
+                    reg1_i_not[7]  ? 24 : reg1_i_not[6]  ? 25 :
+                    reg1_i_not[5]  ? 26 : reg1_i_not[4]  ? 27 :
+                    reg1_i_not[3]  ? 28 : reg1_i_not[2]  ? 29 :
+                    reg1_i_not[1]  ? 30 : reg1_i_not[0]  ? 31 : 32;
                 end
                 default:begin
                     arithmeticres <= `ZeroWord;
@@ -224,12 +223,12 @@ module ex (input wire rst,
     wire[`DoubleRegBus] hilo_temp;
     reg[`DoubleRegBus] mulres;
     
-    assign opdata1_mult = ((aluop_i == `EXE_MUL_OP) ||
-    (aluop_i == `EXE_MULT_OP) &&
+    assign opdata1_mult = (((aluop_i == `EXE_MUL_OP) ||
+    (aluop_i == `EXE_MULT_OP)) &&
     (reg1_i[31] == 1'b1)) ? (~reg1_i + 1) : reg1_i;
     
-    assign opdata2_mult = ((aluop_i == `EXE_MUL_OP) ||
-    (aluop_i == `EXE_MULT_OP) &&
+    assign opdata2_mult = (((aluop_i == `EXE_MUL_OP) ||
+    (aluop_i == `EXE_MULT_OP)) &&
     (reg2_i[31] == 1'b1)) ? (~reg2_i + 1) : reg2_i;
     
     assign hilo_temp = opdata1_mult * opdata2_mult;
@@ -238,11 +237,11 @@ module ex (input wire rst,
         if (rst == `RstEnable) begin
             mulres <= {`ZeroWord,`ZeroWord};
             end else if ((aluop_i == `EXE_MUL_OP) || (aluop_i == `EXE_MULT_OP)) begin
-            if (reg1_i[31] ^ reg2_i[31]) begin
+            if ((reg1_i[31] ^ reg2_i[31]) == 1'b1) begin
                 mulres <= ~hilo_temp + 1;
                 end else begin
                 mulres <= hilo_temp;
-            end
+                end
             end else begin
             mulres <= hilo_temp;
         end
@@ -284,9 +283,9 @@ module ex (input wire rst,
                 if (rst == `RstEnable) begin
                     whilo_o     <= `WriteDisable;
                     {hi_o,lo_o} <= {`ZeroWord,`ZeroWord};
-                    end else if ((aluop_i == `EXE_MULT_OP)
+                    end else if ((aluop_i == `EXE_MULT_OP) ||
                     (aluop_i == `EXE_MULTU_OP)) begin
-                    {hi_o,lo_o} <= mulres
+                    {hi_o,lo_o} <= mulres;
                     end else if (aluop_i == `EXE_MTHI_OP) begin
                     whilo_o     <= `WriteEnable;
                     {hi_o,lo_o} <= {reg1_i,LO};
