@@ -30,22 +30,33 @@ module openmips (input wire rst,
     wire ex_wreg_o;
     wire [`RegAddrBus] ex_wd_o;
     wire [`RegBus] ex_wdata_o;
+    wire [`RegBus] ex_hi_o;
+    wire [`RegBus] ex_lo_o;
+    wire ex_whilo_o;
     
     /*** Connection between EX/MEM and MEM ***/
     wire mem_wreg_i;
     wire [`RegAddrBus] mem_wd_i;
     wire [`RegBus] mem_wdata_i;
+    wire [`RegBus] mem_hi_i;
+    wire [`RegBus] mem_lo_i;
+    wire mem_whilo_i;
     
     /*** Connection between MEM and MEM/WB ***/
     wire mem_wreg_o;
     wire [`RegAddrBus] mem_wd_o;
     wire [`RegBus] mem_wdata_o;
+    wire [`RegBus] mem_hi_o;
+    wire [`RegBus] mem_lo_o;
+    wire mem_whilo_o;
     
     /*** Connection between MEM/WB and Regfile***/
     wire wb_wreg_i;
     wire [`RegAddrBus] wb_wd_i;
     wire [`RegBus] wb_wdata_i;
-    
+    wire [`RegBus] wb_hi_i;
+    wire [`RegBus] wb_lo_i;
+    wire wb_whilo_i;
     /*** Connection between ID and Regfile ***/
     wire reg1_read;
     wire reg2_read;
@@ -54,6 +65,13 @@ module openmips (input wire rst,
     wire [`RegBus] reg1_data;
     wire [`RegBus] reg2_data;
     assign rom_addr_o = pc;
+    
+    /*** Connection with HILO ***/
+    wire hilo_we;
+    wire [`RegBus] hi_i;
+    wire [`RegBus] lo_i;
+    wire [`RegBus] hi_o;
+    wire [`RegBus] hi_o;
     /*** Instantiate the modules ***/
     /*** Instruction Fetch ***/
     pc_reg  u_pc_reg (
@@ -75,29 +93,29 @@ module openmips (input wire rst,
     );
     /*** Instruction Decode ***/
     id u_id (
-    .rst        (rst), 
+    .rst        (rst),
     .pc_i       (id_pc_i),
     .inst_i     (id_inst_i),
-  
+    
     .reg1_data_i(reg1_data),
     .reg2_data_i(reg2_data),
-  
+    
     .reg1_re_o  (reg1_read),
     .reg2_re_o  (reg2_read),
     .reg1_addr_o(reg1_addr),
     .reg2_addr_o(reg2_addr),
-  
+    
     .aluop_o    (id_aluop_o),
     .alusel_o   (id_alusel_o),
-    .reg1_o     (id_reg1_o), 
+    .reg1_o     (id_reg1_o),
     .reg2_o     (id_reg2_o),
     .wd_o       (id_wd_o),
     .wreg_o     (id_wreg_o),
-
+    
     .ex_wd_i    (ex_wd_o),
     .ex_wreg_i  (ex_wreg_o),
     .ex_wdata_i (ex_wdata_o),
-
+    
     .mem_wd_i   (mem_wd_o),
     .mem_wreg_i (mem_wreg_o),
     .mem_wdata_i(mem_wdata_o)
@@ -131,7 +149,22 @@ module openmips (input wire rst,
     
     .wd_o                    (ex_wd_o),
     .wreg_o                  (ex_wreg_o),
-    .wdata_o                 (ex_wdata_o)
+    .wdata_o                 (ex_wdata_o),
+    
+    .hi_i(hi_o),
+    .lo_i(lo_o),
+    
+    .mem_hi_i(mem_hi_o),
+    .mem_lo_i(mem_lo_o),
+    .mem_whilo_i(mem_whilo_o),
+
+    .wb_hi_i(wb_hi_i),
+    .wb_lo_i(wb_lo_i),
+    .wb_whilo_i(wb_whilo_i),
+
+    .whilo_o(ex_whilo_o),
+    .hi_o(ex_hi_o),
+    .lo_o(ex_lo_o)
     );
     ex_mem  u_ex_mem (
     .rst                     (rst),
@@ -142,7 +175,14 @@ module openmips (input wire rst,
     
     .mem_wd                  (mem_wd_i),
     .mem_wreg                (mem_wreg_i),
-    .mem_wdata               (mem_wdata_i)
+    .mem_wdata               (mem_wdata_i),
+
+    .ex_hi(ex_hi_o),
+    .ex_lo(ex_lo_o),
+    .ex_whilo(ex_whilo_o),
+    .mem_hi(mem_hi_i),
+    .mem_lo(mem_lo_i),
+    .mem_whilo(mem_whilo_i)
     );
     /*** Memory Access ***/
     mem  u_mem (
@@ -153,7 +193,14 @@ module openmips (input wire rst,
     
     .wd_o                    (mem_wd_o),
     .wreg_o                  (mem_wreg_o),
-    .wdata_o                 (mem_wdata_o)
+    .wdata_o                 (mem_wdata_o),
+
+    .hi_i(mem_hi_i),
+    .lo_i(mem_lo_i),
+    .whilo_i(mem_whilo_i),
+    .hi_o(mem_hi_o),
+    .lo_o(mem_lo_o),
+    .whilo_o(mem_whilo_o)
     );
     mem_wb  u_mem_wb (
     .rst                     (rst),
@@ -164,11 +211,18 @@ module openmips (input wire rst,
     
     .wb_wd                   (wb_wd_i),
     .wb_wreg                 (wb_wreg_i),
-    .wb_wdata                (wb_wdata_i)
+    .wb_wdata                (wb_wdata_i),
+
+    .mem_hi(mem_hi_o),
+    .mem_lo(mem_lo_o),
+    .mem_whilo(mem_whilo_o),
+    .wb_hi(wb_hi_i),
+    .wb_lo(wb_lo_i),
+    .wb_whilo(wb_whilo_i)
     );
     /*** Register File ***/
     regfile u_regfile(
-    .clk    (clk), 
+    .clk    (clk),
     .rst    (rst),
     .waddr  (wb_wd_i),
     .wdata  (wb_wdata_i),
@@ -176,8 +230,19 @@ module openmips (input wire rst,
     .re_1   (reg1_read),
     .raddr_1(reg1_addr),
     .rdata_1(reg1_data),
-    .re_2   (reg2_read), 
+    .re_2   (reg2_read),
     .raddr_2(reg2_addr),
     .rdata_2(reg2_data)
+    );
+    /*** HILO ***/
+    hilo_reg  u_hilo_reg (
+    .rst                     (rst),
+    .clk                     (clk),
+    .we                      (wb_whilo_i),
+    .hi_i                    (wb_hi_i),
+    .lo_i                    (wb_lo_i),
+    
+    .hi_o                    (hi_o),
+    .lo_o                    (lo_o)
     );
 endmodule //openmips
