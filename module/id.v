@@ -63,6 +63,7 @@ module id (input wire rst,
                     case (op_2)
                         5'b00000: begin
                             case (op_3)
+                                /*** Move Instructions***/
                                 `EXE_MFHI:begin
                                     wreg_o    <= `WriteDisable;
                                     aluop_o   <= `EXE_MFHI_OP;
@@ -124,7 +125,7 @@ module id (input wire rst,
                                                 wreg_o <= `WriteDisable;
                                             end
                                         end
-                                        
+                                        /*** Logic Instructions ***/
                                         `EXE_OR: begin
                                             wreg_o    <= `WriteEnable;
                                             aluop_o   <= `EXE_OR_OP;
@@ -196,11 +197,119 @@ module id (input wire rst,
                                             reg2_re_o <= `ReadEnable;
                                             instvalid <= `InstValid;
                                         end
+                                        /*** Arithmetic Instructions ***/
+                                        `EXE_SLT:begin
+                                            wreg_o    <= `WriteEnable;
+                                            aluop_o   <= `EXE_SLT_OP;
+                                            alusel_o  <= `EXE_RES_ARITHMETIC;
+                                            reg1_re_o <= `ReadEnable;
+                                            reg2_re_o <= `ReadEnable;
+                                            instvalid <= `InstValid;
+                                        end
+                                        
+                                        `EXE_SLTU:begin
+                                            wreg_o    <= `WriteEnable;
+                                            aluop_o   <= `EXE_SLTU_OP;
+                                            alusel_o  <= `EXE_RES_ARITHMETIC;
+                                            reg1_re_o <= `ReadEnable;
+                                            reg2_re_o <= `ReadEnable;
+                                            instvalid <= `InstValid;
+                                        end
+                                        
+                                        `EXE_ADD:begin
+                                            wreg_o    <= `WriteEnable;
+                                            aluop_o   <= `EXE_ADD_OP;
+                                            alusel_o  <= `EXE_RES_ARITHMETIC;
+                                            reg1_re_o <= `ReadEnable;
+                                            reg2_re_o <= `ReadEnable;
+                                            instvalid <= `InstValid;
+                                        end
+                                        
+                                        `EXE_ADDU:begin
+                                            wreg_o    <= `WriteEnable;
+                                            aluop_o   <= `EXE_ADDU_OP;
+                                            alusel_o  <= `EXE_RES_ARITHMETIC;
+                                            reg1_re_o <= `ReadEnable;
+                                            reg2_re_o <= `ReadEnable;
+                                            instvalid <= `InstValid;
+                                        end
+                                        
+                                        `EXE_SUB:begin
+                                            wreg_o    <= `WriteEnable;
+                                            aluop_o   <= `EXE_SUB_OP;
+                                            alusel_o  <= `EXE_RES_ARITHMETIC;
+                                            reg1_re_o <= `ReadEnable;
+                                            reg2_re_o <= `ReadEnable;
+                                            instvalid <= `InstValid;
+                                        end
+                                        
+                                        `EXE_SUBU:begin
+                                            wreg_o    <= `WriteEnable;
+                                            aluop_o   <= `EXE_SUBU_OP;
+                                            alusel_o  <= `EXE_RES_ARITHMETIC;
+                                            reg1_re_o <= `ReadEnable;
+                                            reg2_re_o <= `ReadEnable;
+                                            instvalid <= `InstValid;
+                                        end
+                                        
+                                        `EXE_MULT:begin
+                                            wreg_o    <= `WriteDisable;
+                                            aluop_o   <= `EXE_MULT_OP;
+                                            reg1_re_o <= `ReadEnable;
+                                            reg2_re_o <= `ReadEnable;
+                                            instvalid <= `InstValid;
+                                        end
+                                        
+                                        `EXE_MULTU:begin
+                                            wreg_o    <= `WriteDisable;
+                                            aluop_o   <= `EXE_MULTU_OP;
+                                            reg1_re_o <= `ReadEnable;
+                                            reg2_re_o <= `ReadEnable;
+                                            instvalid <= `InstValid;
+                                        end
+                                        
+                                        default:begin
+                                            
+                                        end
                             endcase
+                        end
+                        default:begin
+                            
                         end
                     endcase
                 end
-                /*** ori instruction ***/
+                `EXE_SPECIAL2_INST:begin
+                    case (op_3)
+                        `EXE_CLZ:begin
+                            wreg_o    <= `WriteEnable;
+                            aluop_o   <= `EXE_CLZ_OP;
+                            alusel_o  <= `EXE_RES_ARITHMETIC;
+                            reg1_re_o <= `ReadEnable;
+                            reg2_re_o <= `ReadDisable;
+                            instvalid <= `InstValid;
+                        end
+                        
+                        `EXE_CLO:begin
+                            wreg_o    <= `WriteEnable;
+                            aluop_o   <= `EXE_CLO_OP;
+                            alusel_o  <= `EXE_RES_ARITHMETIC;
+                            reg1_re_o <= `ReadEnable;
+                            reg2_re_o <= `ReadDisable;
+                            instvalid <= `InstValid;
+                        end
+                        
+                        `EXE_MUL:begin
+                            wreg_o    <= `WriteEnable;
+                            aluop_o   <= `EXE_MUL_OP;
+                            alusel_o  <= `EXE_RES_MUL;
+                            reg1_re_o <= `ReadEnable;
+                            reg2_re_o <= `ReadEnable;
+                            instvalid <= `InstValid;
+                        end
+                        default:
+                    endcase
+                end
+                /*** Logic Instruction ***/
                 `EXE_ORI:begin
                     wreg_o    <= `WriteEnable;
                     wd_o      <= inst_i[20:16];
@@ -253,12 +362,57 @@ module id (input wire rst,
                     reg2_re_o <= `ReadDisable;
                     instvalid <= `InstValid;
                 end
+                /*** Arithmetic Instruction ***/
+                `EXE_SLTI:begin
+                    wreg_o    <= `WriteEnable;
+                    aluop_o   <= `EXE_SLTI_OP;
+                    alusel_o  <= `EXE_RES_ARITHMETIC;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadDisable;
+                    imm       <= {{16{inst_i[15]}},inst_i[15:0]};
+                    wd_o      <= inst_i[20:16];
+                    instvalid <= `InstValid;
+                end
+                
+                `EXE_SLTIU:begin
+                    wreg_o    <= `WriteEnable;
+                    aluop_o   <= `EXE_SLTIU_OP;
+                    alusel_o  <= `EXE_RES_ARITHMETIC;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadDisable;
+                    imm       <= {{16{inst_i[15]}},inst_i[15:0]};
+                    wd_o      <= inst_i[20:16];
+                    instvalid <= `InstValid;
+                end
+                
+                `EXE_ADDI:begin
+                    wreg_o    <= `WriteEnable;
+                    aluop_o   <= `EXE_ADDI_OP;
+                    alusel_o  <= `EXE_RES_ARITHMETIC;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadDisable;
+                    imm       <= {{16{inst_i[15]}},inst_i[15:0]};
+                    wd_o      <= inst_i[20:16];
+                    instvalid <= `InstValid;
+                end
+                
+                `EXE_ADDIU:begin
+                    wreg_o    <= `WriteEnable;
+                    aluop_o   <= `EXE_ADDIU_OP;
+                    alusel_o  <= `EXE_RES_ARITHMETIC;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadDisable;
+                    imm       <= {{16{inst_i[15]}},inst_i[15:0]};
+                    wd_o      <= inst_i[20:16];
+                    instvalid <= `InstValid;
+                end
                 /*** default ***/
                 default :begin
                 end
             endcase
             if (inst_i[31:21] == 11'h0) begin
                 case (op_3)
+                    /*** Logic Instruction ***/
                     `EXE_SLL:begin
                         wreg_o    <= `WriteEnable;
                         aluop_o   <= `EXE_SLL_OP;
