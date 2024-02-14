@@ -5,63 +5,31 @@ inst_rom.om:     file format elf32-tradbigmips
 Disassembly of section .text:
 
 00000000 <_start>:
-   0:	34018000 	li	at,0x8000
+   0:	3401ffff 	li	at,0xffff
    4:	00010c00 	sll	at,at,0x10
-   8:	34210010 	ori	at,at,0x10
-   c:	34028000 	li	v0,0x8000
-  10:	00021400 	sll	v0,v0,0x10
-  14:	34420001 	ori	v0,v0,0x1
-  18:	34030000 	li	v1,0x0
-  1c:	00411821 	addu	v1,v0,at
-  20:	34030000 	li	v1,0x0
-  24:	00411820 	add	v1,v0,at
-  28:	00231822 	sub	v1,at,v1
-  2c:	00621823 	subu	v1,v1,v0
-  30:	20630002 	addi	v1,v1,2
-  34:	34030000 	li	v1,0x0
-  38:	24638000 	addiu	v1,v1,-32768
-  3c:	3401ffff 	li	at,0xffff
-  40:	00010c00 	sll	at,at,0x10
-  44:	0020102a 	slt	v0,at,zero
-  48:	0020102b 	sltu	v0,at,zero
-  4c:	28228000 	slti	v0,at,-32768
-  50:	2c228000 	sltiu	v0,at,-32768
-  54:	3c010000 	lui	at,0x0
-  58:	70221021 	clo	v0,at
-  5c:	70221020 	clz	v0,at
-  60:	3c01ffff 	lui	at,0xffff
-  64:	3421ffff 	ori	at,at,0xffff
-  68:	70221020 	clz	v0,at
-  6c:	70221021 	clo	v0,at
-  70:	3c01a100 	lui	at,0xa100
-  74:	70221020 	clz	v0,at
-  78:	70221021 	clo	v0,at
-  7c:	3c011100 	lui	at,0x1100
-  80:	70221020 	clz	v0,at
-  84:	70221021 	clo	v0,at
-  88:	3401ffff 	li	at,0xffff
-  8c:	00010c00 	sll	at,at,0x10
-  90:	3421fffb 	ori	at,at,0xfffb
-  94:	34020006 	li	v0,0x6
-  98:	70221802 	mul	v1,at,v0
-  9c:	00220018 	mult	at,v0
-  a0:	00220019 	multu	at,v0
+   8:	3421fffb 	ori	at,at,0xfffb
+   c:	34020006 	li	v0,0x6
+  10:	00220018 	mult	at,v0
+  14:	70220000 	madd	at,v0
+  18:	70220001 	maddu	at,v0
+  1c:	70220004 	msub	at,v0
+  20:	70220005 	msubu	at,v0
 	...
 
 Disassembly of section .reginfo:
 
-000000b0 <.reginfo>:
-  b0:	0000000e 	0xe
+00000030 <.reginfo>:
+  30:	00000006 	srlv	zero,zero,zero
 	...
 
 Disassembly of section .MIPS.abiflags:
 
-000000c8 <.MIPS.abiflags>:
-  c8:	00002001 	movf	a0,zero,$fcc0
-  cc:	01010001 	movt	zero,t0,$fcc0
+00000048 <.MIPS.abiflags>:
+  48:	00002001 	movf	a0,zero,$fcc0
+  4c:	01010001 	movt	zero,t0,$fcc0
 	...
-  d8:	00000001 	movf	zero,zero,$fcc0
-  dc:	00000000 	nop
+  58:	00000001 	movf	zero,zero,$fcc0
+  5c:	00000000 	nop
 
 Disassembly of section .gnu.attributes:
 
