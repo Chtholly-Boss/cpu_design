@@ -14,7 +14,8 @@ module mem_wb (input wire rst,
                
                output reg wb_whilo,
                output reg [`RegBus] wb_hi,
-               output reg [`RegBus] wb_lo);
+               output reg [`RegBus] wb_lo,
+               input  wire [5:0] stall);
     
     always @(posedge clk) begin
         if (rst == `RstEnable) begin
@@ -24,7 +25,14 @@ module mem_wb (input wire rst,
             wb_hi <= `ZeroWord;
             wb_lo <= `ZeroWord;
             wb_whilo <= `WriteDisable;
-            end else begin
+        end else if(stall[4] == `Stop && stall[5] == `NoStop) begin
+            wb_wd    <= `NOPRegAddr;
+            wb_wdata <= `ZeroWord;
+            wb_wreg  <= `WriteDisable;
+            wb_hi <= `ZeroWord;
+            wb_lo <= `ZeroWord;
+            wb_whilo <= `WriteDisable;
+        end else if(stall[4] == `NoStop) begin
             wb_wd    <= mem_wd;
             wb_wdata <= mem_wdata;
             wb_wreg  <= mem_wreg;

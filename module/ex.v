@@ -19,7 +19,13 @@ module ex (input wire rst,
            input wire wb_whilo_i,
            output reg [`RegBus] hi_o,
            output reg [`RegBus] lo_o,
-           output reg whilo_o);
+           output reg whilo_o,
+           output reg stallreq_from_ex,
+           
+           input  wire [`DoubleRegBus] hilo_temp_i,
+           input  wire [1:0] cnt_i,
+           output reg [`DoubleRegBus] hilo_temp_o,
+           output reg [1:0] cnt_o);
     /*** Definition ***/
     reg[`RegBus] HI;
     reg[`RegBus] LO;
@@ -221,14 +227,20 @@ module ex (input wire rst,
     wire[`RegBus] opdata1_mult;
     wire[`RegBus] opdata2_mult;
     wire[`DoubleRegBus] hilo_temp;
+    reg [`DoubleRegBus] hilo_temp_for_madd_msub;
     reg[`DoubleRegBus] mulres;
+    reg stallreq_for_madd_msub;
     
     assign opdata1_mult = (((aluop_i == `EXE_MUL_OP) ||
-    (aluop_i == `EXE_MULT_OP)) &&
+    (aluop_i == `EXE_MULT_OP) ||
+    (aluop_i == `EXE_MADD_OP) ||
+    (aluop_i == `EXE_MSUB_OP)) &&
     (reg1_i[31] == 1'b1)) ? (~reg1_i + 1) : reg1_i;
     
     assign opdata2_mult = (((aluop_i == `EXE_MUL_OP) ||
-    (aluop_i == `EXE_MULT_OP)) &&
+    (aluop_i == `EXE_MULT_OP) ||
+    (aluop_i == `EXE_MADD_OP) ||
+    (aluop_i == `EXE_MSUB_OP)) &&
     (reg2_i[31] == 1'b1)) ? (~reg2_i + 1) : reg2_i;
     
     assign hilo_temp = opdata1_mult * opdata2_mult;
@@ -236,22 +248,68 @@ module ex (input wire rst,
     always @(*) begin
         if (rst == `RstEnable) begin
             mulres <= {`ZeroWord,`ZeroWord};
-            end else if ((aluop_i == `EXE_MUL_OP) || (aluop_i == `EXE_MULT_OP)) begin
+            end else if ((aluop_i == `EXE_MUL_OP) ||
+            (aluop_i == `EXE_MULT_OP) ||
+            (aluop_i == `EXE_MADD_OP) ||
+            (aluop_i == `EXE_MSUB_OP)) begin
             if ((reg1_i[31] ^ reg2_i[31]) == 1'b1) begin
                 mulres <= ~hilo_temp + 1;
                 end else begin
                 mulres <= hilo_temp;
-                end
+            end
             end else begin
             mulres <= hilo_temp;
+        end
+    end
+
+    /*** MADD and MSUB ***/
+    always @( *) begin
+        if (rst == `RstEnable) begin
+            hilo_temp_o <= {`ZeroWord,`ZeroWord};
+            cnt_o <= 2'b00;
+            stallreq_for_madd_msub <= `NoStop;
+        end else begin
+            case (aluop_i)
+                `EXE_MADD_OP,`EXE_MADDU_OP:begin
+                    if (cnt_i == 2'b00) begin
+                        hilo_temp_o <= mulres;
+                        cnt_o <= 2'b01;
+                        stallreq_for_madd_msub <= `Stop;
+                        hilo_temp_for_madd_msub <= {`ZeroWord,`ZeroWord};
+                    end else if(cnt_i == 2'b01) begin
+                        hilo_temp_o <= {`ZeroWord,`ZeroWord};
+                        cnt_o <= 2'b10;
+                        hilo_temp_for_madd_msub <= hilo_temp_i + {HI,LO};
+                        stallreq_for_madd_msub <= `NoStop;
+                    end
+                end 
+
+                `EXE_MSUB_OP,`EXE_MSUBU_OP:begin
+                    if (cnt_i == 2'b00) begin
+                        hilo_temp_o <= ~mulres + 1;
+                        cnt_o <= 2'b01;
+                        stallreq_for_madd_msub <= `Stop;
+                    end else if(cnt_i == 2'b01) begin
+                        hilo_temp_o <= {`ZeroWord,`ZeroWord};
+                        cnt_o <= 2'b10;
+                        hilo_temp_for_madd_msub <= hilo_temp_i + {HI,LO};
+                        stallreq_for_madd_msub <= `NoStop;
+                    end
+                end
+                default:begin
+                    hilo_temp_o <= {`ZeroWord,`ZeroWord};
+                    cnt_o <= 2'b00;
+                    stallreq_for_madd_msub <= `NoStop;
+                end 
+            endcase
         end
     end
     /*** Determine the Final Result ***/
     always @(*) begin
         wd_o <= wd_i;
-        if ((aluop_i == `EXE_ADD_OP)  ||
+        if (((aluop_i == `EXE_ADD_OP)  ||
             (aluop_i == `EXE_ADDI_OP) ||
-            (aluop_i == `EXE_SUB_OP)  &&
+            (aluop_i == `EXE_SUB_OP))  &&
             (ov_sum == 1'b1)) begin
             wreg_o <= `WriteDisable;
             end else begin
@@ -278,23 +336,42 @@ module ex (input wire rst,
                 end
             endcase
             end
-            /*** Write HILO ***/
-            always @(*) begin
-                if (rst == `RstEnable) begin
-                    whilo_o     <= `WriteDisable;
-                    {hi_o,lo_o} <= {`ZeroWord,`ZeroWord};
-                    end else if ((aluop_i == `EXE_MULT_OP) ||
-                    (aluop_i == `EXE_MULTU_OP)) begin
-                    {hi_o,lo_o} <= mulres;
-                    end else if (aluop_i == `EXE_MTHI_OP) begin
-                    whilo_o     <= `WriteEnable;
-                    {hi_o,lo_o} <= {reg1_i,LO};
-                    end else if (aluop_i == `EXE_MTLO_OP) begin
-                    whilo_o     <= `WriteEnable;
-                    {hi_o,lo_o} <= {HI,reg1_i};
-                    end else begin
-                    whilo_o     <= `WriteDisable;
-                    {hi_o,lo_o} <= {`ZeroWord,`ZeroWord};
-                end
-                    end
-                    endmodule //ex
+    /*** Write HILO ***/
+    always @(*) begin
+        if (rst == `RstEnable) begin
+            whilo_o     <= `WriteDisable;
+            {hi_o,lo_o} <= {`ZeroWord,`ZeroWord};
+            end else if ((aluop_i == `EXE_MULT_OP) ||
+            (aluop_i == `EXE_MULTU_OP)) begin
+            whilo_o <= `WriteEnable;
+            {hi_o,lo_o} <= mulres;
+            end else if (aluop_i == `EXE_MTHI_OP) begin
+            whilo_o     <= `WriteEnable;
+            {hi_o,lo_o} <= {reg1_i,LO};
+            end else if (aluop_i == `EXE_MTLO_OP) begin
+            whilo_o     <= `WriteEnable;
+            {hi_o,lo_o} <= {HI,reg1_i};
+            end else begin
+            whilo_o     <= `WriteDisable;
+            {hi_o,lo_o} <= {`ZeroWord,`ZeroWord};
+        end
+    end
+    /*** Write HILO for MADD and MSUB ***/
+    always @( *) begin
+        if (rst == `RstEnable) begin
+            whilo_o <= `WriteDisable;
+            {hi_o,lo_o} <= {`ZeroWord,`ZeroWord};
+        end else if((aluop_i == `EXE_MADD_OP) ||
+        (aluop_i == `EXE_MADDU_OP) ||
+        (aluop_i == `EXE_MSUB_OP) ||
+        (aluop_i == `EXE_MSUBU_OP)) begin
+            whilo_o <= `WriteEnable;
+            {hi_o,lo_o} <= hilo_temp_for_madd_msub;
+        end
+    end
+    /*** Stall Control ***/
+    always @(*) begin
+        stallreq_from_ex <= stallreq_for_madd_msub;
+    end
+
+endmodule //ex

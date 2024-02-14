@@ -5,6 +5,11 @@ module openmips (input wire rst,
                  input wire [`RegBus] rom_data_i,
                  output wire [`RegBus] rom_addr_o,
                  output wire rom_ce_o);
+    /*** Pipeline Control Signal ***/
+    wire [5:0] stall;
+    wire stallreq_from_id;
+    wire stallreq_from_ex;
+
     /*** Connection between IF/ID and ID ***/
     wire [`InstAddrBus] pc;
     wire [`InstAddrBus] id_pc_i;
@@ -33,7 +38,11 @@ module openmips (input wire rst,
     wire [`RegBus] ex_hi_o;
     wire [`RegBus] ex_lo_o;
     wire ex_whilo_o;
-    
+    wire [`DoubleRegBus] ex_hilo_temp_o;
+    wire [1:0] ex_cnt_o;
+    wire [`DoubleRegBus] ex_hilo_temp_i;
+    wire [1:0] ex_cnt_i
+    ;
     /*** Connection between EX/MEM and MEM ***/
     wire mem_wreg_i;
     wire [`RegAddrBus] mem_wd_i;
@@ -76,7 +85,9 @@ module openmips (input wire rst,
     .rst           (rst),
     
     .pc            (pc),
-    .ce            (rom_ce_o)
+    .ce            (rom_ce_o),
+
+    .stall(stall)
     );
     
     if_id  u_if_id (
@@ -86,7 +97,9 @@ module openmips (input wire rst,
     .if_inst       (rom_data_i),
     
     .id_pc         (id_pc_i),
-    .id_inst       (id_inst_i)
+    .id_inst       (id_inst_i),
+
+    .stall(stall)
     );
     /*** Instruction Decode ***/
     id u_id (
@@ -115,7 +128,9 @@ module openmips (input wire rst,
     
     .mem_wd_i   (mem_wd_o),
     .mem_wreg_i (mem_wreg_o),
-    .mem_wdata_i(mem_wdata_o)
+    .mem_wdata_i(mem_wdata_o),
+
+    .stallreq_from_id(stallreq_from_id)
     );
     id_ex  u_id_ex (
     .clk                     (clk),
@@ -132,7 +147,9 @@ module openmips (input wire rst,
     .ex_reg1                     (ex_reg1_i),
     .ex_reg2                     (ex_reg2_i),
     .ex_wd                       (ex_wd_i),
-    .ex_wreg                     (ex_wreg_i)
+    .ex_wreg                     (ex_wreg_i),
+
+    .stall(stall)
     );
     /*** Execute ***/
     ex  u_ex (
@@ -161,7 +178,13 @@ module openmips (input wire rst,
 
     .whilo_o(ex_whilo_o),
     .hi_o(ex_hi_o),
-    .lo_o(ex_lo_o)
+    .lo_o(ex_lo_o),
+
+    .stallreq_from_ex(stallreq_from_ex),
+    .hilo_temp_o(ex_hilo_temp_o),
+    .hilo_temp_i(ex_hilo_temp_i),
+    .cnt_o(ex_cnt_o),
+    .cnt_i(ex_cnt_i)
     );
     ex_mem  u_ex_mem (
     .rst                     (rst),
@@ -179,7 +202,13 @@ module openmips (input wire rst,
     .ex_whilo(ex_whilo_o),
     .mem_hi(mem_hi_i),
     .mem_lo(mem_lo_i),
-    .mem_whilo(mem_whilo_i)
+    .mem_whilo(mem_whilo_i),
+
+    .stall(stall),
+    .hilo_i(ex_hilo_temp_o),
+    .hilo_o(ex_hilo_temp_i),
+    .cnt_i(ex_cnt_o),
+    .cnt_o(ex_cnt_i)
     );
     /*** Memory Access ***/
     mem  u_mem (
@@ -215,7 +244,9 @@ module openmips (input wire rst,
     .mem_whilo(mem_whilo_o),
     .wb_hi(wb_hi_i),
     .wb_lo(wb_lo_i),
-    .wb_whilo(wb_whilo_i)
+    .wb_whilo(wb_whilo_i),
+
+    .stall(stall)
     );
     /*** Register File ***/
     regfile u_regfile(
@@ -242,4 +273,12 @@ module openmips (input wire rst,
     .hi_o                    (hi_o),
     .lo_o                    (lo_o)
     );
+    /*** Stall Control ***/
+    ctrl  u_ctrl (
+    .rst                     ( rst                ),
+    .stallreq_from_id        ( stallreq_from_id   ),
+    .stallreq_from_ex        ( stallreq_from_ex   ),
+
+    .stall                   ( stall              )
+);
 endmodule //openmips

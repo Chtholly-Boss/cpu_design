@@ -19,7 +19,9 @@ module id (input wire rst,
            input wire [`RegBus] ex_wdata_i,
            input wire mem_wreg_i,
            input wire [`RegAddrBus] mem_wd_i,
-           input wire [`RegBus] mem_wdata_i);
+           input wire [`RegBus] mem_wdata_i,
+           output reg stallreq_from_id);
+
     /*** Definition***/
     wire [5:0] op_1 = inst_i[31:26];
     wire [4:0] op_2 = inst_i[10:6];
@@ -306,6 +308,42 @@ module id (input wire rst,
                             reg2_re_o <= `ReadEnable;
                             instvalid <= `InstValid;
                         end
+
+                        `EXE_MADD:begin
+                            wreg_o <= `WriteDisable;
+                            aluop_o <= `EXE_MADD_OP;
+                            alusel_o <= `EXE_RES_MUL;
+                            reg1_re_o <= `ReadEnable;
+                            reg2_re_o <= `ReadEnable;
+                            instvalid <= `InstValid;
+                        end
+
+                        `EXE_MADDU:begin
+                            wreg_o <= `WriteDisable;
+                            aluop_o <= `EXE_MADDU_OP;
+                            alusel_o <= `EXE_RES_MUL;
+                            reg1_re_o <= `ReadEnable;
+                            reg2_re_o <= `ReadEnable;
+                            instvalid <= `InstValid;
+                        end
+
+                        `EXE_MSUB:begin
+                            wreg_o <= `WriteDisable;
+                            aluop_o <= `EXE_MSUB_OP;
+                            alusel_o <= `EXE_RES_MUL;
+                            reg1_re_o <= `ReadEnable;
+                            reg2_re_o <= `ReadEnable;
+                            instvalid <= `InstValid;
+                        end
+
+                        `EXE_MSUBU:begin
+                            wreg_o <= `WriteDisable;
+                            aluop_o <= `EXE_MSUBU_OP;
+                            alusel_o <= `EXE_RES_MUL;
+                            reg1_re_o <= `ReadEnable;
+                            reg2_re_o <= `ReadEnable;
+                            instvalid <= `InstValid;
+                        end
                         default:begin
                             
                         end
@@ -489,5 +527,9 @@ module id (input wire rst,
             end else begin
             reg2_o <= `ZeroWord;
         end
+    end
+
+    initial begin
+        stallreq_from_id <= 1'b0;
     end
 endmodule //id
