@@ -41,8 +41,8 @@ module openmips (input wire rst,
     wire [`DoubleRegBus] ex_hilo_temp_o;
     wire [1:0] ex_cnt_o;
     wire [`DoubleRegBus] ex_hilo_temp_i;
-    wire [1:0] ex_cnt_i
-    ;
+    wire [1:0] ex_cnt_i;
+
     /*** Connection between EX/MEM and MEM ***/
     wire mem_wreg_i;
     wire [`RegAddrBus] mem_wd_i;
@@ -75,6 +75,14 @@ module openmips (input wire rst,
     wire [`RegBus] reg2_data;
     assign rom_addr_o = pc;
     
+    /*** Connection between EX and DIV ***/
+    wire signed_div_i;
+    wire [31:0] opdata_1_i;
+    wire [31:0] opdata_2_i;
+    wire start_i;
+    wire annul_i;
+    wire [63:0] result_o;
+    wire ready_o;
     /*** Connection with HILO ***/
     wire [`RegBus] hi_o;
     wire [`RegBus] lo_o;
@@ -184,7 +192,14 @@ module openmips (input wire rst,
     .hilo_temp_o(ex_hilo_temp_o),
     .hilo_temp_i(ex_hilo_temp_i),
     .cnt_o(ex_cnt_o),
-    .cnt_i(ex_cnt_i)
+    .cnt_i(ex_cnt_i),
+
+    .div_result_i(result_o),
+    .div_ready_i(ready_o),
+    .div_opdata1_o(opdata_1_i),
+    .div_opdata2_o(opdata_2_i),
+    .div_start_o(start_i),
+    .signed_div_o(signed_div_i)
     );
     ex_mem  u_ex_mem (
     .rst                     (rst),
@@ -280,5 +295,17 @@ module openmips (input wire rst,
     .stallreq_from_ex        ( stallreq_from_ex   ),
 
     .stall                   ( stall              )
+);
+    div  u_div (
+    .clk                     ( clk            ),
+    .rst                     ( rst            ),
+    .signed_div_i            ( signed_div_i   ),
+    .opdata_1_i              ( opdata_1_i     ),
+    .opdata_2_i              ( opdata_2_i     ),
+    .start_i                 ( start_i        ),
+    .annul_i                 ( 1'b0           ),
+
+    .result_o                ( result_o       ),
+    .ready_o                 ( ready_o        )
 );
 endmodule //openmips
