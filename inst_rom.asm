@@ -5,31 +5,29 @@ inst_rom.om:     file format elf32-tradbigmips
 Disassembly of section .text:
 
 00000000 <_start>:
-   0:	3401ffff 	li	at,0xffff
-   4:	00010c00 	sll	at,at,0x10
-   8:	3421fffb 	ori	at,at,0xfffb
-   c:	34020006 	li	v0,0x6
-  10:	00220018 	mult	at,v0
-  14:	70220000 	madd	at,v0
-  18:	70220001 	maddu	at,v0
-  1c:	70220004 	msub	at,v0
-  20:	70220005 	msubu	at,v0
-	...
+   0:	3402ffff 	li	v0,0xffff
+   4:	00021400 	sll	v0,v0,0x10
+   8:	3442fff1 	ori	v0,v0,0xfff1
+   c:	34030011 	li	v1,0x11
+  10:	0043001a 	div	zero,v0,v1
+  14:	0043001b 	divu	zero,v0,v1
+  18:	0062001a 	div	zero,v1,v0
+  1c:	00000000 	nop
 
 Disassembly of section .reginfo:
 
-00000030 <.reginfo>:
-  30:	00000006 	srlv	zero,zero,zero
+00000020 <.reginfo>:
+  20:	0000000c 	syscall
 	...
 
 Disassembly of section .MIPS.abiflags:
 
-00000048 <.MIPS.abiflags>:
-  48:	00002001 	movf	a0,zero,$fcc0
-  4c:	01010001 	movt	zero,t0,$fcc0
+00000038 <.MIPS.abiflags>:
+  38:	00002001 	movf	a0,zero,$fcc0
+  3c:	01010001 	movt	zero,t0,$fcc0
 	...
-  58:	00000001 	movf	zero,zero,$fcc0
-  5c:	00000000 	nop
+  48:	00000001 	movf	zero,zero,$fcc0
+  4c:	00000000 	nop
 
 Disassembly of section .gnu.attributes:
 
