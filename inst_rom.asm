@@ -5,100 +5,60 @@ inst_rom.om:     file format elf32-tradbigmips
 Disassembly of section .text:
 
 00000000 <_start>:
-   0:	34038000 	li	v1,0x8000
-   4:	00031c00 	sll	v1,v1,0x10
-   8:	34010001 	li	at,0x1
-   c:	10000004 	b	20 <s1>
-  10:	34010002 	li	at,0x2
-  14:	34011111 	li	at,0x1111
-  18:	34011100 	li	at,0x1100
-  1c:	00000000 	nop
+   0:	3403eeff 	li	v1,0xeeff
+   4:	a0030003 	sb	v1,3(zero)
+   8:	00031a02 	srl	v1,v1,0x8
+   c:	a0030002 	sb	v1,2(zero)
+  10:	3403ccdd 	li	v1,0xccdd
+  14:	a0030001 	sb	v1,1(zero)
+  18:	00031a02 	srl	v1,v1,0x8
+  1c:	a0030000 	sb	v1,0(zero)
+  20:	80010003 	lb	at,3(zero)
+  24:	90010002 	lbu	at,2(zero)
+  28:	3403aabb 	li	v1,0xaabb
+  2c:	a4030004 	sh	v1,4(zero)
+  30:	94010004 	lhu	at,4(zero)
+  34:	84010004 	lh	at,4(zero)
+  38:	34038899 	li	v1,0x8899
+  3c:	a4030006 	sh	v1,6(zero)
+  40:	84010006 	lh	at,6(zero)
+  44:	94010006 	lhu	at,6(zero)
+  48:	34034455 	li	v1,0x4455
+  4c:	00031c00 	sll	v1,v1,0x10
+  50:	34636677 	ori	v1,v1,0x6677
+  54:	ac030008 	sw	v1,8(zero)
+  58:	8c010008 	lw	at,8(zero)
+  5c:	88010005 	lwl	at,5(zero)
+  60:	98010008 	lwr	at,8(zero)
+  64:	00000000 	nop
+  68:	b8010002 	swr	at,2(zero)
+  6c:	a8010007 	swl	at,7(zero)
+  70:	8c010000 	lw	at,0(zero)
+  74:	8c010004 	lw	at,4(zero)
 
-00000020 <s1>:
-  20:	34010003 	li	at,0x3
-  24:	0411000a 	bal	50 <s2>
-  28:	03e1001a 	div	zero,ra,at
-  2c:	34011100 	li	at,0x1100
-  30:	34011111 	li	at,0x1111
-  34:	14200012 	bnez	at,80 <s3>
-  38:	00000000 	nop
-  3c:	34011100 	li	at,0x1100
-  40:	34011111 	li	at,0x1111
-	...
-
-00000050 <s2>:
-  50:	34010004 	li	at,0x4
-  54:	1063000a 	beq	v1,v1,80 <s3>
-  58:	03e00825 	move	at,ra
-  5c:	34011111 	li	at,0x1111
-  60:	34011100 	li	at,0x1100
-  64:	34010007 	li	at,0x7
-  68:	34010008 	li	at,0x8
-  6c:	1c200024 	bgtz	at,100 <s4>
-  70:	34010009 	li	at,0x9
-  74:	34011111 	li	at,0x1111
-  78:	34011100 	li	at,0x1100
+00000078 <_loop>:
+  78:	0800001e 	j	78 <_loop>
   7c:	00000000 	nop
-
-00000080 <s3>:
-  80:	34010005 	li	at,0x5
-  84:	0421fff7 	bgez	at,64 <s2+0x14>
-  88:	34010006 	li	at,0x6
-  8c:	34011111 	li	at,0x1111
-  90:	34011100 	li	at,0x1100
-	...
-
-00000100 <s4>:
- 100:	3401000a 	li	at,0xa
- 104:	0471ffde 	bgezal	v1,80 <s3>
- 108:	001f0825 	or	at,zero,ra
- 10c:	3401000b 	li	at,0xb
- 110:	3401000c 	li	at,0xc
- 114:	3401000d 	li	at,0xd
- 118:	3401000e 	li	at,0xe
- 11c:	04600004 	bltz	v1,130 <s5>
- 120:	3401000f 	li	at,0xf
- 124:	34011100 	li	at,0x1100
-	...
-
-00000130 <s5>:
- 130:	34010010 	li	at,0x10
- 134:	1820ffcb 	blez	at,64 <s2+0x14>
- 138:	34010011 	li	at,0x11
- 13c:	34010012 	li	at,0x12
- 140:	34010013 	li	at,0x13
- 144:	04700006 	bltzal	v1,160 <s6>
- 148:	001f0825 	or	at,zero,ra
- 14c:	34011100 	li	at,0x1100
-	...
-
-00000160 <s6>:
- 160:	34010014 	li	at,0x14
- 164:	00000000 	nop
-
-00000168 <_loop>:
- 168:	0800005a 	j	168 <_loop>
- 16c:	00000000 	nop
 
 Disassembly of section .reginfo:
 
-00000170 <.reginfo>:
- 170:	8000000a 	lb	zero,10(zero)
+00000080 <.reginfo>:
+  80:	0000000a 	movz	zero,zero,zero
 	...
 
 Disassembly of section .MIPS.abiflags:
 
-00000188 <.MIPS.abiflags>:
- 188:	00002001 	movf	a0,zero,$fcc0
- 18c:	01010001 	movt	zero,t0,$fcc0
+00000098 <.MIPS.abiflags>:
+  98:	00002001 	movf	a0,zero,$fcc0
+  9c:	01010001 	movt	zero,t0,$fcc0
 	...
- 198:	00000001 	movf	zero,zero,$fcc0
- 19c:	00000000 	nop
+  a8:	00000001 	movf	zero,zero,$fcc0
+  ac:	00000000 	nop
 
 Disassembly of section .gnu.attributes:
 
 00000000 <.gnu.attributes>:
    0:	41000000 	0x41000000
-   4:	0f676e75 	jal	d9db9d4 <_loop+0xd9db86c>
+   4:	0f676e75 	jal	d9db9d4 <_loop+0xd9db95c>
    8:	00010000 	sll	zero,at,0x0
    c:	00070401 	0x70401
