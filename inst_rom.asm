@@ -5,34 +5,58 @@ inst_rom.om:     file format elf32-tradbigmips
 Disassembly of section .text:
 
 00000000 <_start>:
-   0:	3402ffff 	li	v0,0xffff
-   4:	00021400 	sll	v0,v0,0x10
-   8:	3442fff1 	ori	v0,v0,0xfff1
-   c:	34030011 	li	v1,0x11
-  10:	0043001a 	div	zero,v0,v1
-  14:	0043001b 	divu	zero,v0,v1
-  18:	0062001a 	div	zero,v1,v0
-  1c:	00000000 	nop
+   0:	34010001 	li	at,0x1
+   4:	08000008 	j	20 <_start+0x20>
+   8:	34010002 	li	at,0x2
+   c:	34011111 	li	at,0x1111
+  10:	34011100 	li	at,0x1100
+	...
+  20:	34010003 	li	at,0x3
+  24:	0c000010 	jal	40 <_start+0x40>
+  28:	03e1001a 	div	zero,ra,at
+  2c:	34010005 	li	at,0x5
+  30:	34010006 	li	at,0x6
+  34:	08000018 	j	60 <_start+0x60>
+  38:	00000000 	nop
+  3c:	00000000 	nop
+  40:	03e01009 	jalr	v0,ra
+  44:	00400825 	move	at,v0
+  48:	34010009 	li	at,0x9
+  4c:	3401000a 	li	at,0xa
+  50:	08000020 	j	80 <_start+0x80>
+  54:	00000000 	nop
+	...
+  60:	34010007 	li	at,0x7
+  64:	00400008 	jr	v0
+  68:	34010008 	li	at,0x8
+  6c:	34011111 	li	at,0x1111
+  70:	34011100 	li	at,0x1100
+	...
+
+00000084 <_loop>:
+  84:	08000021 	j	84 <_loop>
+  88:	00000000 	nop
+  8c:	00000000 	nop
 
 Disassembly of section .reginfo:
 
-00000020 <.reginfo>:
-  20:	0000000c 	syscall
+00000090 <.reginfo>:
+  90:	80000006 	lb	zero,6(zero)
 	...
 
 Disassembly of section .MIPS.abiflags:
 
-00000038 <.MIPS.abiflags>:
-  38:	00002001 	movf	a0,zero,$fcc0
-  3c:	01010001 	movt	zero,t0,$fcc0
+000000a8 <.MIPS.abiflags>:
+  a8:	00002001 	movf	a0,zero,$fcc0
+  ac:	01010001 	movt	zero,t0,$fcc0
 	...
-  48:	00000001 	movf	zero,zero,$fcc0
-  4c:	00000000 	nop
+  b8:	00000001 	movf	zero,zero,$fcc0
+  bc:	00000000 	nop
 
 Disassembly of section .gnu.attributes:
 
 00000000 <.gnu.attributes>:
    0:	41000000 	0x41000000
-   4:	0f676e75 	jal	d9db9d4 <_start+0xd9db9d4>
+   4:	0f676e75 	jal	d9db9d4 <_loop+0xd9db950>
    8:	00010000 	sll	zero,at,0x0
    c:	00070401 	0x70401
