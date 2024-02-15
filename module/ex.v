@@ -34,7 +34,10 @@ module ex (input wire rst,
            output reg [`RegBus] div_opdata1_o,
            output reg [`RegBus] div_opdata2_o,
            output reg div_start_o,
-           output reg signed_div_o);
+           output reg signed_div_o,
+           
+           input  wire is_in_delayslot_i,
+           input  wire [31:0] link_address_i);
     /*** Definition ***/
     reg[`RegBus] HI;
     reg[`RegBus] LO;
@@ -391,6 +394,9 @@ module ex (input wire rst,
                 end
                 `EXE_RES_MUL:begin
                     wdata_o <= mulres[31:0];
+                end
+                `EXE_RES_JUMP_BRANCH:begin
+                    wdata_o <= link_address_i;
                 end
                 default: begin
                     wdata_o <= `ZeroWord;

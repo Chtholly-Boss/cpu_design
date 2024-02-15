@@ -22,6 +22,13 @@ module openmips (input wire rst,
     wire [`RegBus] id_reg2_o;
     wire id_wreg_o;
     wire [`RegAddrBus] id_wd_o;
+
+    wire id_is_in_delayslot_i;
+    wire id_branch_flag_o;
+    wire [`RegBus] id_branch_target_address_o;
+    wire id_is_in_delayslot_o;
+    wire [`RegBus] id_link_addr_o;
+    wire id_next_inst_in_delayslot_o;
     
     /*** Connection between ID/EX and EX ***/
     wire [`AluOpBus] ex_aluop_i;
@@ -30,6 +37,8 @@ module openmips (input wire rst,
     wire [`RegBus] ex_reg2_i;
     wire ex_wreg_i;
     wire [`RegAddrBus] ex_wd_i;
+    wire [`RegBus] ex_link_address_i;
+    wire ex_is_in_delayslot_i;
     
     /*** Connection between EX and EX/MEM ***/
     wire ex_wreg_o;
@@ -95,7 +104,9 @@ module openmips (input wire rst,
     .pc            (pc),
     .ce            (rom_ce_o),
 
-    .stall(stall)
+    .stall(stall),
+    .branch_flag_i(id_branch_flag_o),
+    .branch_target_address_i(id_branch_target_address_o)
     );
     
     if_id  u_if_id (
@@ -138,7 +149,14 @@ module openmips (input wire rst,
     .mem_wreg_i (mem_wreg_o),
     .mem_wdata_i(mem_wdata_o),
 
-    .stallreq_from_id(stallreq_from_id)
+    .stallreq_from_id(stallreq_from_id),
+
+    .branch_flag_o             (id_branch_flag_o),
+    .branch_target_address_o   ( id_branch_target_address_o    ),
+    .is_in_delayslot_i         ( id_is_in_delayslot_i          ),
+    .is_in_delayslot_o         ( id_is_in_delayslot_o          ),
+    .link_addr_o               ( id_link_addr_o                ),
+    .next_inst_in_delayslot_o  ( id_next_inst_in_delayslot_o   )
     );
     id_ex  u_id_ex (
     .clk                     (clk),
@@ -157,7 +175,14 @@ module openmips (input wire rst,
     .ex_wd                       (ex_wd_i),
     .ex_wreg                     (ex_wreg_i),
 
-    .stall(stall)
+    .stall(stall),
+
+    .id_link_address           ( id_link_addr_o            ),
+    .id_is_in_delayslot        ( id_is_in_delayslot_o         ),
+    .next_inst_in_delayslot_i  ( id_next_inst_in_delayslot_o   ),
+    .ex_link_address           ( ex_link_address_i            ),
+    .ex_is_in_delayslot        ( ex_is_in_delayslot_i         ),
+    .is_in_delayslot_o         ( id_is_in_delayslot_i          )
     );
     /*** Execute ***/
     ex  u_ex (
@@ -199,7 +224,10 @@ module openmips (input wire rst,
     .div_opdata1_o(opdata_1_i),
     .div_opdata2_o(opdata_2_i),
     .div_start_o(start_i),
-    .signed_div_o(signed_div_i)
+    .signed_div_o(signed_div_i),
+
+    .link_address_i(ex_link_address_i),
+    .is_in_delayslot_i(ex_is_in_delayslot_i)
     );
     ex_mem  u_ex_mem (
     .rst                     (rst),
