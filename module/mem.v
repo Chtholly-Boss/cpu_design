@@ -22,7 +22,13 @@ module mem (input wire rst,
             output reg [`RegBus] mem_addr_o,
             output reg [3:0] mem_sel_o,
             output reg [`RegBus] mem_data_o,
-            output reg mem_ce_o);
+            output reg mem_ce_o,
+            
+            input  wire LLbit_i,
+            input  wire wb_LLbit_we_i,
+            input  wire wb_LLbit_value_i,
+            output reg LLbit_we_o,
+            output reg LLbit_value_o);
 
     wire [`RegBus] zero_32;
     reg mem_we;
@@ -294,10 +300,47 @@ module mem (input wire rst,
                         end
                     endcase
                 end
+
+                `EXE_LL_OP:begin
+                    mem_addr_o <= mem_addr_i;
+                    mem_we <= `WriteDisable;
+                    wdata_o <= mem_data_i;
+                    LLbit_we_o <= `WriteEnable;
+                    LLbit_value_o <= 1'b1;
+                    mem_sel_o <= 4'b1111;
+                    mem_ce_o <= `ChipEnable;
+                end
+
+                `EXE_SC_OP:begin
+                    if (LLbit == 1'b1) begin
+                        LLbit_we_o <= `WriteEnable;
+                        LLbit_value_o <= 1'b0;
+                        mem_addr_o <= mem_addr_i;
+                        mem_we <= `WriteEnable;
+                        mem_data_o <= reg2_i;
+                        wdata_o <= 32'h1;
+                        mem_sel_o <= 4'b1111;
+                        mem_ce_o <= `ChipEnable;
+                    end else begin
+                        wdata_o <= 32'h0;
+                    end
+                end
                 default: begin
                 end
             endcase
         end
     end
-    
+    /*** Logic About LLbit ***/
+    reg LLbit;
+    always @( *) begin
+        if (rst == `RstEnable) begin
+            LLbit <= 1'b0;
+        end else begin
+            if (wb_LLbit_we_i == 1'b1) begin
+                LLbit <= wb_LLbit_value_i;
+            end else begin
+                LLbit <= LLbit_i;
+            end
+        end
+    end    
 endmodule //mem

@@ -49,6 +49,7 @@ module openmips (input wire rst,
     wire [`RegBus] ex_link_address_i;
     wire ex_is_in_delayslot_i;
     wire [`RegBus] ex_inst_i;
+
     /*** Connection between EX and EX/MEM ***/
     wire ex_wreg_o;
     wire [`RegAddrBus] ex_wd_o;
@@ -85,6 +86,9 @@ module openmips (input wire rst,
     wire [`RegBus] mem_hi_o;
     wire [`RegBus] mem_lo_o;
     wire mem_whilo_o;
+    wire mem_LLbit_we_o;
+    wire mem_LLbit_value_o;
+
     /*** Connection between MEM/WB and Regfile***/
     wire wb_wreg_i;
     wire [`RegAddrBus] wb_wd_i;
@@ -109,9 +113,16 @@ module openmips (input wire rst,
     wire annul_i;
     wire [63:0] result_o;
     wire ready_o;
+
     /*** Connection with HILO ***/
     wire [`RegBus] hi_o;
     wire [`RegBus] lo_o;
+
+    /*** Connection with LLbit reg ***/
+    wire mem_LLbit_value_i;
+    wire mem_LLbit_we_i;
+    wire wb_LLbit_we_i;
+    wire wb_LLbit_value_i;
     /*** Instantiate the modules ***/
     /*** Instruction Fetch ***/
     pc_reg  u_pc_reg (
@@ -318,7 +329,13 @@ module openmips (input wire rst,
     .mem_we_o(ram_we_o),
     .mem_sel_o(ram_sel_o),
     .mem_data_o(ram_data_o),
-    .mem_ce_o(ram_ce_o)
+    .mem_ce_o(ram_ce_o),
+
+    .LLbit_value_o(mem_LLbit_value_o),
+    .LLbit_we_o(mem_LLbit_we_o),
+    .LLbit_i(mem_LLbit_value_i),
+    .wb_LLbit_value_i(wb_LLbit_value_i),
+    .wb_LLbit_we_i(wb_LLbit_we_i)
     );
     mem_wb  u_mem_wb (
     .rst                     (rst),
@@ -338,7 +355,11 @@ module openmips (input wire rst,
     .wb_lo(wb_lo_i),
     .wb_whilo(wb_whilo_i),
     
-    .stall(stall)
+    .stall(stall),
+    .mem_LLbit_value(mem_LLbit_value_o),
+    .mem_LLbit_we(mem_LLbit_we_o),
+    .wb_LLbit_value(wb_LLbit_value_i),
+    .wb_LLbit_we(wb_LLbit_we_i)
     );
     /*** Register File ***/
     regfile u_regfile(
@@ -373,6 +394,7 @@ module openmips (input wire rst,
     
     .stall                   (stall)
     );
+    /*** Division Module ***/
     div  u_div (
     .clk                     (clk),
     .rst                     (rst),
@@ -385,4 +407,16 @@ module openmips (input wire rst,
     .result_o                (result_o),
     .ready_o                 (ready_o)
     );
+    /*** LLbit reg ***/
+    wire flush;
+    assign flush = 1'b0;
+    LLbit_reg  u_LLbit_reg (
+    .clk                     ( clk                  ),
+    .rst                     ( rst                  ),
+    .flush                   ( flush                ),
+    .LLbit_i                 ( wb_LLbit_value_i     ),
+    .we                      ( wb_LLbit_we_i        ),
+
+    .LLbit_o                 ( mem_LLbit_value_i    )
+);
 endmodule //openmips
