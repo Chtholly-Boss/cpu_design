@@ -37,8 +37,7 @@ module openmips (input wire rst,
     wire [`RegBus] id_link_addr_o;
     wire id_next_inst_in_delayslot_o;
     
-    wire [`RegBus] id_inst_o;
-    
+    wire [`RegBus] id_inst_o;    
     /*** Connection between ID/EX and EX ***/
     wire [`AluOpBus] ex_aluop_i;
     wire [`AluSelBus] ex_alusel_i;
@@ -172,6 +171,7 @@ module openmips (input wire rst,
     .ex_wd_i    (ex_wd_o),
     .ex_wreg_i  (ex_wreg_o),
     .ex_wdata_i (ex_wdata_o),
+    .ex_aluop_i (ex_aluop_o),
     
     .mem_wd_i   (mem_wd_o),
     .mem_wreg_i (mem_wreg_o),

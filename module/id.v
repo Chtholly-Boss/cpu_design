@@ -20,7 +20,6 @@ module id (input wire rst,
            input wire mem_wreg_i,
            input wire [`RegAddrBus] mem_wd_i,
            input wire [`RegBus] mem_wdata_i,
-           output wire stallreq_from_id,
            
            output reg branch_flag_o,
            output reg [31:0] branch_target_address_o,
@@ -29,7 +28,10 @@ module id (input wire rst,
            output reg next_inst_in_delayslot_o,
            input  wire is_in_delayslot_i,
            
-           output wire [`InstBus] inst_o);
+           output wire [`InstBus] inst_o,
+           
+           input  wire [`AluOpBus] ex_aluop_i,
+           output wire stallreq_from_id);
 
     /*** Definition***/
     wire [5:0] op_1 = inst_i[31:26];
@@ -910,5 +912,41 @@ module id (input wire rst,
             is_in_delayslot_o <= is_in_delayslot_i;
         end
     end
-    assign stallreq_from_id = `NoStop;
+    /*** LOAD Relevant Control logic ***/
+    reg stallreq_for_reg1_loadrelate;
+    reg stallreq_for_reg2_loadrelate;
+    wire pre_inst_is_load;
+    
+    assign pre_inst_is_load = (
+        (ex_aluop_i == `EXE_LB_OP) ||
+        (ex_aluop_i == `EXE_LBU_OP) ||
+        (ex_aluop_i == `EXE_LH_OP) ||
+        (ex_aluop_i == `EXE_LHU_OP) ||
+        (ex_aluop_i == `EXE_LW_OP) ||
+        (ex_aluop_i == `EXE_LWL_OP) ||
+        (ex_aluop_i == `EXE_LWR_OP) ||
+        (ex_aluop_i == `EXE_LL_OP) ||
+        (ex_aluop_i == `EXE_SC_OP)
+    ) ? 1'b1 : 1'b0;
+
+    always @( *) begin
+        stallreq_for_reg1_loadrelate <= `NoStop;
+        if (rst == `RstEnable) begin
+            reg1_o <= `ZeroWord;
+        end else if(pre_inst_is_load == 1'b1 && ex_wd_i == reg1_addr_o
+        && reg1_re_o == `ReadEnable) begin
+            stallreq_for_reg1_loadrelate <= `Stop;
+        end
+    end
+    always @( *) begin
+        stallreq_for_reg2_loadrelate <= `NoStop;
+        if (rst == `RstEnable) begin
+            reg2_o <= `ZeroWord;
+        end else if(pre_inst_is_load == 1'b1 && ex_wd_i == reg2_addr_o
+        && reg1_re_o == `ReadEnable) begin
+            stallreq_for_reg2_loadrelate <= `Stop;
+        end
+    end
+    
+    assign stallreq_from_id = stallreq_for_reg1_loadrelate | stallreq_for_reg2_loadrelate;;
 endmodule //id
