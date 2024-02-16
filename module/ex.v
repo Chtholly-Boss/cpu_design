@@ -37,11 +37,21 @@ module ex (input wire rst,
            output reg signed_div_o,
            
            input  wire is_in_delayslot_i,
-           input  wire [31:0] link_address_i);
+           input  wire [31:0] link_address_i,
+           
+           input  wire [31:0] inst_i,
+           output wire [`AluOpBus] aluop_o,
+           output wire [`RegBus] mem_addr_o,
+           output wire [`RegBus] reg2_o,
+           
+           input wire mem_wreg_i,
+           input wire [`RegAddrBus] mem_wd_i,
+           input wire [`RegBus] mem_wdata_i);
     /*** Definition ***/
     reg[`RegBus] HI;
     reg[`RegBus] LO;
     
+    assign aluop_o = aluop_i;
     /*** Check if Memory Access and Write Back would change HI/LO ***/
     always @(*) begin
         if (rst == `RstEnable) begin
@@ -440,6 +450,10 @@ module ex (input wire rst,
             {hi_o,lo_o} <= div_result_i;
         end
     end
+    /*** Memory Instruction ***/
+    assign aluop_o = aluop_i;
+    assign mem_addr_o = reg1_i + {{16{inst_i[15]}},inst_i[15:0]};
+    assign reg2_o = (mem_wreg_i == `WriteEnable && mem_wd_i == wd_o) ? mem_wdata_i:reg2_i;
     /*** Stall Control ***/
     always @(*) begin
         stallreq_from_ex <= stallreq_for_madd_msub || stallreq_for_div;

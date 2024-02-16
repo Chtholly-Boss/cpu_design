@@ -27,7 +27,9 @@ module id (input wire rst,
            output reg is_in_delayslot_o,
            output reg [31:0] link_addr_o,
            output reg next_inst_in_delayslot_o,
-           input  wire is_in_delayslot_i );
+           input  wire is_in_delayslot_i,
+           
+           output wire [`InstBus] inst_o);
 
     /*** Definition***/
     wire [5:0] op_1 = inst_i[31:26];
@@ -48,6 +50,7 @@ module id (input wire rst,
 
     assign imm_sll2_signedext = {{14{inst_i[15]}},inst_i[15:0],2'b00};
 
+    assign inst_o = inst_i;
     /*** Decode ***/
     always @(*) begin
         if (rst == `RstEnable) begin
@@ -661,6 +664,121 @@ module id (input wire rst,
                         end
                     endcase
                 end
+                /*** Memory Instruction ***/
+                `EXE_LB:begin
+                    wreg_o <= `WriteEnable;
+                    aluop_o <= `EXE_LB_OP;
+                    alusel_o <= `EXE_RES_LOAD_STORE;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadDisable;
+                    wd_o <= inst_i[20:16];
+                    instvalid <= `InstValid;
+                end
+
+                `EXE_LBU:begin
+                    wreg_o <= `WriteEnable;
+                    aluop_o <= `EXE_LBU_OP;
+                    alusel_o <= `EXE_RES_LOAD_STORE;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadDisable;
+                    wd_o <= inst_i[20:16];
+                    instvalid <= `InstValid;
+                end
+
+                `EXE_LH:begin
+                    wreg_o <= `WriteEnable;
+                    aluop_o <= `EXE_LH_OP;
+                    alusel_o <= `EXE_RES_LOAD_STORE;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadDisable;
+                    wd_o <= inst_i[20:16];
+                    instvalid <= `InstValid;
+                end
+
+                `EXE_LHU:begin
+                    wreg_o <= `WriteEnable;
+                    aluop_o <= `EXE_LHU_OP;
+                    alusel_o <= `EXE_RES_LOAD_STORE;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadDisable;
+                    wd_o <= inst_i[20:16];
+                    instvalid <= `InstValid;
+                end
+
+                `EXE_LW:begin
+                    wreg_o <= `WriteEnable;
+                    aluop_o <= `EXE_LW_OP;
+                    alusel_o <= `EXE_RES_LOAD_STORE;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadDisable;
+                    wd_o <= inst_i[20:16];
+                    instvalid <= `InstValid;
+                end
+
+                `EXE_LWL:begin
+                    wreg_o <= `WriteEnable;
+                    aluop_o <= `EXE_LWL_OP;
+                    alusel_o <= `EXE_RES_LOAD_STORE;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadEnable;
+                    wd_o <= inst_i[20:16];
+                    instvalid <= `InstValid;
+                end
+
+                `EXE_LWR:begin
+                    wreg_o <= `WriteEnable;
+                    aluop_o <= `EXE_LWR_OP;
+                    alusel_o <= `EXE_RES_LOAD_STORE;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadEnable;
+                    wd_o <= inst_i[20:16];
+                    instvalid <= `InstValid;
+                end
+
+                `EXE_SB:begin
+                    wreg_o <= `WriteDisable;
+                    aluop_o <= `EXE_SB_OP;
+                    alusel_o <= `EXE_RES_LOAD_STORE;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadEnable;
+                    instvalid <= `InstValid;
+                end
+
+                `EXE_SH:begin
+                    wreg_o <= `WriteDisable;
+                    aluop_o <= `EXE_SH_OP;
+                    alusel_o <= `EXE_RES_LOAD_STORE;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadEnable;
+                    instvalid <= `InstValid;
+                end
+
+                `EXE_SW:begin
+                    wreg_o <= `WriteDisable;
+                    aluop_o <= `EXE_SW_OP;
+                    alusel_o <= `EXE_RES_LOAD_STORE;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadEnable;
+                    instvalid <= `InstValid;
+                end
+
+                `EXE_SWL:begin
+                    wreg_o <= `WriteDisable;
+                    aluop_o <= `EXE_SWL_OP;
+                    alusel_o <= `EXE_RES_LOAD_STORE;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadEnable;
+                    instvalid <= `InstValid;
+                end
+
+                `EXE_SWR:begin
+                    wreg_o <= `WriteDisable;
+                    aluop_o <= `EXE_SWR_OP;
+                    alusel_o <= `EXE_RES_LOAD_STORE;
+                    reg1_re_o <= `ReadEnable;
+                    reg2_re_o <= `ReadEnable;
+                    instvalid <= `InstValid;
+                end
                 /*** default ***/
                 default :begin
                 end
@@ -701,6 +819,27 @@ module id (input wire rst,
                         instvalid <= `InstValid;
                     end
                 endcase
+            end
+            /*** NOP ***/
+            if (inst_i == 32'h0) begin
+                aluop_o  <= `EXE_NOP_OP;
+                alusel_o <= `EXE_RES_NOP;
+                
+                wd_o   <= inst_i[15:11];
+                wreg_o <= `WriteDisable;
+                
+                instvalid <= `InstInvalid;
+                
+                reg1_re_o   <= `ReadDisable;
+                reg2_re_o   <= `ReadDisable;
+                reg1_addr_o <= inst_i[25:21];
+                reg2_addr_o <= inst_i[20:16];
+                
+                imm <= `ZeroWord;
+                link_addr_o <= `ZeroWord;
+                branch_flag_o <= `NotBranch;
+                branch_target_address_o <= `ZeroWord;
+                next_inst_in_delayslot_o <= `NotInDelaySlot;
             end
         end
     end
