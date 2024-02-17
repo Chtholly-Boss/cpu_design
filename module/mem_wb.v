@@ -20,7 +20,15 @@ module mem_wb (input wire rst,
                input  wire mem_LLbit_we,
                input  wire mem_LLbit_value,
                output reg wb_LLbit_we,
-               output reg wb_LLbit_value);
+               output reg wb_LLbit_value,
+               
+               input  wire mem_cp0_reg_we,
+               input  wire [4:0] mem_cp0_reg_waddr,
+               input  wire [31:0] mem_cp0_reg_wdata,
+               
+               output reg wb_cp0_reg_we,
+               output reg [4:0] wb_cp0_reg_waddr,
+               output reg [31:0] wb_cp0_reg_wdata);
     
     always @(posedge clk) begin
         if (rst == `RstEnable) begin
@@ -32,6 +40,9 @@ module mem_wb (input wire rst,
             wb_whilo <= `WriteDisable;
             wb_LLbit_value <= 1'b0;
             wb_LLbit_we <= 1'b0;
+            wb_cp0_reg_we <= `WriteDisable;
+            wb_cp0_reg_waddr <= 5'b00000;
+            wb_cp0_reg_wdata <= `ZeroWord;
         end else if(stall[4] == `Stop && stall[5] == `NoStop) begin
             wb_wd    <= `NOPRegAddr;
             wb_wdata <= `ZeroWord;
@@ -41,6 +52,9 @@ module mem_wb (input wire rst,
             wb_whilo <= `WriteDisable;
             wb_LLbit_value <= 1'b0;
             wb_LLbit_we <= 1'b0;
+            wb_cp0_reg_we <= `WriteDisable;
+            wb_cp0_reg_waddr <= 5'b00000;
+            wb_cp0_reg_wdata <= `ZeroWord;
         end else if(stall[4] == `NoStop) begin
             wb_wd    <= mem_wd;
             wb_wdata <= mem_wdata;
@@ -50,6 +64,9 @@ module mem_wb (input wire rst,
             wb_whilo <= mem_whilo;
             wb_LLbit_value <= mem_LLbit_value;
             wb_LLbit_we <= mem_LLbit_we;
+            wb_cp0_reg_we <= mem_cp0_reg_we;
+            wb_cp0_reg_waddr <= mem_cp0_reg_waddr;
+            wb_cp0_reg_wdata <= mem_cp0_reg_wdata;
         end
     end
     

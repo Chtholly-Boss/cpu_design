@@ -5,13 +5,14 @@ module openmips (input wire rst,
                  input wire [`RegBus] rom_data_i,
                  output wire [`RegBus] rom_addr_o,
                  output wire rom_ce_o,
-                 
-                 input  wire [31:0] ram_data_i,
+                 input wire [31:0] ram_data_i,
                  output wire [31:0] ram_addr_o,
                  output wire [31:0] ram_data_o,
                  output wire ram_we_o,
                  output wire [3:0] ram_sel_o,
-                 output wire ram_ce_o);
+                 output wire ram_ce_o,
+                 input  wire [5:0] int_i,
+                 output wire [31:0] timer_int_o);
     /*** Pipeline Control Signal ***/
     wire [5:0] stall;
     wire stallreq_from_id;
@@ -37,7 +38,7 @@ module openmips (input wire rst,
     wire [`RegBus] id_link_addr_o;
     wire id_next_inst_in_delayslot_o;
     
-    wire [`RegBus] id_inst_o;    
+    wire [`RegBus] id_inst_o;
     /*** Connection between ID/EX and EX ***/
     wire [`AluOpBus] ex_aluop_i;
     wire [`AluSelBus] ex_alusel_i;
@@ -48,7 +49,7 @@ module openmips (input wire rst,
     wire [`RegBus] ex_link_address_i;
     wire ex_is_in_delayslot_i;
     wire [`RegBus] ex_inst_i;
-
+    
     /*** Connection between EX and EX/MEM ***/
     wire ex_wreg_o;
     wire [`RegAddrBus] ex_wd_o;
@@ -63,6 +64,11 @@ module openmips (input wire rst,
     wire [`AluOpBus] ex_aluop_o;
     wire [`RegBus] ex_mem_addr_o;
     wire [`RegBus] ex_reg2_o;
+    wire ex_cp0_reg_we_o;
+    wire [4:0] ex_cp0_reg_waddr_o;
+    wire [31:0] ex_cp0_reg_wdata_o;
+    
+    wire [4:0] ex_cp0_reg_raddr_o;
     
     /*** Connection between EX/MEM and MEM ***/
     wire mem_wreg_i;
@@ -77,7 +83,9 @@ module openmips (input wire rst,
     wire [`RegBus] mem_reg2_i;
     wire [`RegBus] mem_mem_data_i;
     
-    
+    wire mem_cp0_reg_we_i;
+    wire [4:0] mem_cp0_reg_waddr_i;
+    wire [31:0] mem_cp0_reg_wdata_i;
     /*** Connection between MEM and MEM/WB ***/
     wire mem_wreg_o;
     wire [`RegAddrBus] mem_wd_o;
@@ -87,7 +95,10 @@ module openmips (input wire rst,
     wire mem_whilo_o;
     wire mem_LLbit_we_o;
     wire mem_LLbit_value_o;
-
+    wire mem_cp0_reg_we_o;
+    wire [4:0] mem_cp0_reg_waddr_o;
+    wire [31:0] mem_cp0_reg_wdata_o;
+    
     /*** Connection between MEM/WB and Regfile***/
     wire wb_wreg_i;
     wire [`RegAddrBus] wb_wd_i;
@@ -95,6 +106,10 @@ module openmips (input wire rst,
     wire [`RegBus] wb_hi_i;
     wire [`RegBus] wb_lo_i;
     wire wb_whilo_i;
+
+    wire wb_cp0_reg_we;
+    wire [31:0] wb_cp0_reg_wdata;
+    wire [4:0] wb_cp0_reg_waddr;
     /*** Connection between ID and Regfile ***/
     wire reg1_read;
     wire reg2_read;
@@ -112,11 +127,11 @@ module openmips (input wire rst,
     wire annul_i;
     wire [63:0] result_o;
     wire ready_o;
-
+    
     /*** Connection with HILO ***/
     wire [`RegBus] hi_o;
     wire [`RegBus] lo_o;
-
+    
     /*** Connection with LLbit reg ***/
     wire mem_LLbit_value_i;
     wire mem_LLbit_we_i;
@@ -213,7 +228,7 @@ module openmips (input wire rst,
     .ex_link_address           (ex_link_address_i),
     .ex_is_in_delayslot        (ex_is_in_delayslot_i),
     .is_in_delayslot_o         (id_is_in_delayslot_i),
-
+    
     .id_inst(id_inst_o),
     .ex_inst(ex_inst_i)
     );
@@ -261,15 +276,27 @@ module openmips (input wire rst,
     
     .link_address_i(ex_link_address_i),
     .is_in_delayslot_i(ex_is_in_delayslot_i),
-
+    
     .inst_i(ex_inst_i),
     .aluop_o(ex_aluop_o),
     .mem_addr_o(ex_mem_addr_o),
     .reg2_o(ex_reg2_o),
-
+    
     .mem_wd_i   (mem_wd_o),
     .mem_wreg_i (mem_wreg_o),
-    .mem_wdata_i(mem_wdata_o)
+    .mem_wdata_i(mem_wdata_o),
+    
+    .cp0_reg_wdata_o(ex_cp0_reg_wdata_o),
+    .cp0_reg_we_o(ex_cp0_reg_we_o),
+    .cp0_reg_waddr_o(ex_cp0_reg_waddr_o),
+    .mem_cp0_reg_waddr(mem_cp0_reg_waddr_o),
+    .mem_cp0_reg_wdata(mem_cp0_reg_wdata_o),
+    .mem_cp0_reg_we(mem_cp0_reg_we_o),
+    .wb_cp0_reg_waddr(wb_cp0_reg_waddr),
+    .wb_cp0_reg_wdata(wb_cp0_reg_wdata),
+    .wb_cp0_reg_we(wb_cp0_reg_we),
+
+    .cp0_reg_data_i(data_o)
     );
     ex_mem  u_ex_mem (
     .rst                     (rst),
@@ -294,14 +321,21 @@ module openmips (input wire rst,
     .hilo_o(ex_hilo_temp_i),
     .cnt_i(ex_cnt_o),
     .cnt_o(ex_cnt_i),
-
+    
     .ex_aluop(ex_aluop_o),
     .ex_mem_addr(ex_mem_addr_o),
     .ex_reg2(ex_reg2_o),
-
+    
     .mem_aluop(mem_aluop_i),
     .mem_mem_addr(mem_mem_addr_i),
-    .mem_reg2(mem_reg2_i)
+    .mem_reg2(mem_reg2_i),
+    
+    .ex_cp0_reg_waddr(ex_cp0_reg_waddr_o),
+    .ex_cp0_reg_wdata(ex_cp0_reg_wdata_o),
+    .ex_cp0_reg_we(ex_cp0_reg_we_o),
+    .mem_cp0_reg_waddr(mem_cp0_reg_waddr_i),
+    .mem_cp0_reg_wdata(mem_cp0_reg_wdata_i),
+    .mem_cp0_reg_we(mem_cp0_reg_we_i)
     );
     /*** Memory Access ***/
     mem  u_mem (
@@ -320,7 +354,7 @@ module openmips (input wire rst,
     .hi_o(mem_hi_o),
     .lo_o(mem_lo_o),
     .whilo_o(mem_whilo_o),
-
+    
     .reg2_i(mem_reg2_i),
     .aluop_i(mem_aluop_i),
     .mem_addr_i(mem_mem_addr_i),
@@ -330,12 +364,19 @@ module openmips (input wire rst,
     .mem_sel_o(ram_sel_o),
     .mem_data_o(ram_data_o),
     .mem_ce_o(ram_ce_o),
-
+    
     .LLbit_value_o(mem_LLbit_value_o),
     .LLbit_we_o(mem_LLbit_we_o),
     .LLbit_i(mem_LLbit_value_i),
     .wb_LLbit_value_i(wb_LLbit_value_i),
-    .wb_LLbit_we_i(wb_LLbit_we_i)
+    .wb_LLbit_we_i(wb_LLbit_we_i),
+    
+    .cp0_reg_wdata_i(mem_cp0_reg_wdata_i),
+    .cp0_reg_we_i(mem_cp0_reg_we_i),
+    .cp0_reg_waddr_i(mem_cp0_reg_waddr_i),
+    .cp0_reg_wdata_o(mem_cp0_reg_wdata_o),
+    .cp0_reg_we_o(mem_cp0_reg_we_o),
+    .cp0_reg_waddr_o(mem_cp0_reg_waddr_o)
     );
     mem_wb  u_mem_wb (
     .rst                     (rst),
@@ -359,7 +400,14 @@ module openmips (input wire rst,
     .mem_LLbit_value(mem_LLbit_value_o),
     .mem_LLbit_we(mem_LLbit_we_o),
     .wb_LLbit_value(wb_LLbit_value_i),
-    .wb_LLbit_we(wb_LLbit_we_i)
+    .wb_LLbit_we(wb_LLbit_we_i),
+    
+    .mem_cp0_reg_waddr(mem_cp0_reg_waddr_o),
+    .mem_cp0_reg_wdata(mem_cp0_reg_wdata_o),
+    .mem_cp0_reg_we(mem_cp0_reg_we_o),
+    .wb_cp0_reg_waddr(wb_cp0_reg_waddr),
+    .wb_cp0_reg_wdata(wb_cp0_reg_wdata),
+    .wb_cp0_reg_we(wb_cp0_reg_we)
     );
     /*** Register File ***/
     regfile u_regfile(
@@ -411,12 +459,41 @@ module openmips (input wire rst,
     wire flush;
     assign flush = 1'b0;
     LLbit_reg  u_LLbit_reg (
-    .clk                     ( clk                  ),
-    .rst                     ( rst                  ),
-    .flush                   ( flush                ),
-    .LLbit_i                 ( wb_LLbit_value_i     ),
-    .we                      ( wb_LLbit_we_i        ),
-
-    .LLbit_o                 ( mem_LLbit_value_i    )
-);
+    .clk                     (clk),
+    .rst                     (rst),
+    .flush                   (flush),
+    .LLbit_i                 (wb_LLbit_value_i),
+    .we                      (wb_LLbit_we_i),
+    
+    .LLbit_o                 (mem_LLbit_value_i)
+    );
+    /*** Connection with CP0 ***/
+    wire  [31:0]  data_o;
+    wire  [31:0]  count_o;
+    wire  [31:0]  compare_o;
+    wire  [31:0]  status_o;
+    wire  [31:0]  cause_o;
+    wire  [31:0]  epc_o;
+    wire  [31:0]  config_o;
+    wire  [31:0]  prid_o;
+    /*** CP0 ***/
+    cp0_reg  u_cp0_reg (
+    .clk                     (clk),
+    .rst                     (rst),
+    .we_i                    (wb_cp0_reg_we),
+    .waddr_i                 (wb_cp0_reg_waddr),
+    .raddr_i                 (ex_cp0_reg_raddr_o),
+    .data_i                  (wb_cp0_reg_wdata),
+    .int_i                   (int_i),
+    
+    .data_o                  (data_o),
+    .count_o                 (count_o),
+    .compare_o               (compare_o),
+    .status_o                (status_o),
+    .cause_o                 (cause_o),
+    .epc_o                   (epc_o),
+    .config_o                (config_o),
+    .prid_o                  (prid_o),
+    .timer_int_o             (timer_int_o)
+    );
 endmodule //openmips

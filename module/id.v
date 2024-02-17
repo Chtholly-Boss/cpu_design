@@ -863,6 +863,26 @@ module id (input wire rst,
                 branch_target_address_o <= `ZeroWord;
                 next_inst_in_delayslot_o <= `NotInDelaySlot;
             end
+            /*** Instruction about CP0 ***/
+            if (inst_i[31:21] == 11'b01000000000 && inst_i[10:0] == 11'h0) begin
+                /*** mfc0 ***/
+                aluop_o <= `EXE_MFC0_OP;
+                alusel_o <= `EXE_RES_MOVE;
+                wd_o <= inst_i[20:16];
+                wreg_o <= `WriteEnable;
+                instvalid <= `InstValid;
+                reg1_re_o <= `ReadDisable;
+                reg2_re_o <= `ReadDisable;
+            end else if(inst_i[31:21] == 11'b01000000100 && inst_i[10:0] == 11'b0) begin
+                /*** mtc0 ***/
+                aluop_o <= `EXE_MTC0_OP;
+                alusel_o <= `EXE_RES_MOVE;
+                wreg_o <= `WriteDisable;
+                instvalid <= `InstValid;
+                reg1_re_o <= `ReadEnable;
+                reg2_re_o <= `ReadDisable;
+                reg1_addr_o <= inst_i[20:16];
+            end
         end
     end
     /*** Determine operands based on Signals ***/

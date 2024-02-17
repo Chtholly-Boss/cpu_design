@@ -46,7 +46,22 @@ module ex (input wire rst,
            
            input wire mem_wreg_i,
            input wire [`RegAddrBus] mem_wd_i,
-           input wire [`RegBus] mem_wdata_i);
+           input wire [`RegBus] mem_wdata_i,
+           
+           input  wire mem_cp0_reg_we,
+           input  wire [4:0] mem_cp0_reg_waddr,
+           input  wire [31:0] mem_cp0_reg_wdata,
+           
+           input  wire wb_cp0_reg_we,
+           input  wire [4:0] wb_cp0_reg_waddr,
+           input  wire [31:0] wb_cp0_reg_wdata,
+           
+           input  wire [31:0] cp0_reg_data_i,
+           output reg [4:0] cp0_reg_raddr_o,
+           
+           output reg cp0_reg_we_o,
+           output reg [4:0] cp0_reg_waddr_o,
+           output reg [31:0] cp0_reg_wdata_o);
     /*** Definition ***/
     reg[`RegBus] HI;
     reg[`RegBus] LO;
@@ -89,6 +104,17 @@ module ex (input wire rst,
                     moveres <= reg1_i;
                 end
                 
+                `EXE_MFC0_OP:begin
+                    cp0_reg_raddr_o <= inst_i[15:11];
+                    moveres <= cp0_reg_data_i;
+                    if (mem_cp0_reg_we == `WriteEnable
+                    && mem_cp0_reg_waddr == inst_i[15:11]) begin
+                        moveres <= mem_cp0_reg_wdata;
+                    end else if(wb_cp0_reg_we == `WriteEnable
+                    && wb_cp0_reg_waddr == inst_i[15:11]) begin
+                        moveres <= wb_cp0_reg_wdata;
+                    end
+                end
                 default :begin
                     
                 end
@@ -376,6 +402,23 @@ module ex (input wire rst,
                 default: begin
                 end
             endcase
+        end
+    end
+
+    /*** mtc0 ***/
+    always @( *) begin
+        if (rst == `RstEnable) begin
+            cp0_reg_waddr_o <= 5'b00000;
+            cp0_reg_we_o <= `WriteDisable;
+            cp0_reg_wdata_o <= `ZeroWord;
+        end else if(aluop_i == `EXE_MTC0_OP) begin
+            cp0_reg_waddr_o <= inst_i[15:11];
+            cp0_reg_we_o <= `WriteEnable;
+            cp0_reg_wdata_o <= reg1_i;
+        end else begin
+            cp0_reg_waddr_o <= 5'b00000;
+            cp0_reg_we_o <= `WriteDisable;
+            cp0_reg_wdata_o <= `ZeroWord;
         end
     end
     /*** Determine the Final Result ***/
