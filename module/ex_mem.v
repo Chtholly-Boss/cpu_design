@@ -35,7 +35,16 @@ module ex_mem (input wire rst,
                
                output reg mem_cp0_reg_we,
                output reg [4:0] mem_cp0_reg_waddr,
-               output reg [31:0] mem_cp0_reg_wdata);
+               output reg [31:0] mem_cp0_reg_wdata,
+               
+               input  wire flush,
+               input  wire [31:0] ex_excepttype,
+               input  wire ex_is_in_delayslot,
+               input  wire [31:0] ex_current_inst_addr,
+               
+               output reg [31:0] mem_excepttype,
+               output reg mem_is_in_delayslot,
+               output reg [31:0] mem_current_inst_addr);
     always @(posedge clk) begin
         if (rst == `RstEnable) begin
             mem_wd    <= `NOPRegAddr;
@@ -50,6 +59,29 @@ module ex_mem (input wire rst,
             mem_cp0_reg_we <= `WriteDisable;
             mem_cp0_reg_waddr <= 5'b00000;
             mem_cp0_reg_wdata <= `ZeroWord;
+            mem_excepttype <= `ZeroWord;
+            mem_is_in_delayslot <= `NotInDelaySlot;
+            mem_current_inst_addr <= `ZeroWord;
+            hilo_o <= {`ZeroWord,`ZeroWord};
+            cnt_o <= 2'b00;
+        end else if(flush == 1'b1) begin
+            mem_wd    <= `NOPRegAddr;
+            mem_wreg  <= `WriteDisable;
+            mem_wdata <= `ZeroWord;
+            mem_hi    <= `ZeroWord;
+            mem_lo    <= `ZeroWord;
+            mem_whilo <= `WriteDisable;
+            mem_aluop <= `EXE_NOP_OP;
+            mem_mem_addr <= `ZeroWord;
+            mem_reg2 <= `ZeroWord;
+            mem_cp0_reg_we <= `WriteDisable;
+            mem_cp0_reg_waddr <= 5'b00000;
+            mem_cp0_reg_wdata <= `ZeroWord;
+            mem_excepttype <= `ZeroWord;
+            mem_is_in_delayslot <= `NotInDelaySlot;
+            mem_current_inst_addr <= `ZeroWord;
+            hilo_o <= {`ZeroWord,`ZeroWord};
+            cnt_o <= 2'b00;
         end else if(stall[3] == `Stop && stall[4] == `NoStop) begin
             mem_wd    <= `NOPRegAddr;
             mem_wreg  <= `WriteDisable;
@@ -65,6 +97,9 @@ module ex_mem (input wire rst,
             mem_cp0_reg_we <= `WriteDisable;
             mem_cp0_reg_waddr <= 5'b00000;
             mem_cp0_reg_wdata <= `ZeroWord;
+            mem_excepttype <= `ZeroWord;
+            mem_is_in_delayslot <= `NotInDelaySlot;
+            mem_current_inst_addr <= `ZeroWord;
         end else if(stall[3] == `NoStop) begin
             mem_wd    <= ex_wd;
             mem_wdata <= ex_wdata;
@@ -80,6 +115,9 @@ module ex_mem (input wire rst,
             mem_cp0_reg_we <= ex_cp0_reg_we;
             mem_cp0_reg_waddr <= ex_cp0_reg_waddr;
             mem_cp0_reg_wdata <= ex_cp0_reg_wdata;
+            mem_excepttype <= ex_excepttype;
+            mem_is_in_delayslot <= ex_is_in_delayslot;
+            mem_current_inst_addr <= ex_current_inst_addr;
         end else begin
             hilo_o <= hilo_i;
             cnt_o <= cnt_i;

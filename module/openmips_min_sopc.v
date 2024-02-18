@@ -12,7 +12,12 @@ module openmips_min_sopc (input wire clk,
     wire ram_we_o;
     wire ram_ce_o;
     wire [`RegBus] ram_data_i;
+    wire [3:0] mem_sel_i;
+    wire [5:0] interupt;
+    wire time_int;
     
+    assign interupt = {5'b00000,time_int};
+
     openmips  u_openmips (
     .rst                     (rst),
     .clk                     (clk),
@@ -26,7 +31,10 @@ module openmips_min_sopc (input wire clk,
     .ram_data_o(ram_data_o),
     .ram_sel_o(ram_sel_o),
     .ram_we_o(ram_we_o),
-    .ram_ce_o(ram_ce_o)
+    .ram_ce_o(ram_ce_o),
+
+    .int_i(interupt),
+    .timer_int_o(time_int)
     );
     inst_rom  u_inst_rom (
     .ce                      (rom_ce),

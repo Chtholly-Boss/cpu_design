@@ -28,10 +28,24 @@ module mem_wb (input wire rst,
                
                output reg wb_cp0_reg_we,
                output reg [4:0] wb_cp0_reg_waddr,
-               output reg [31:0] wb_cp0_reg_wdata);
+               output reg [31:0] wb_cp0_reg_wdata,
+               
+               input  wire flush);
     
     always @(posedge clk) begin
         if (rst == `RstEnable) begin
+            wb_wd    <= `NOPRegAddr;
+            wb_wdata <= `ZeroWord;
+            wb_wreg  <= `WriteDisable;
+            wb_hi <= `ZeroWord;
+            wb_lo <= `ZeroWord;
+            wb_whilo <= `WriteDisable;
+            wb_LLbit_value <= 1'b0;
+            wb_LLbit_we <= 1'b0;
+            wb_cp0_reg_we <= `WriteDisable;
+            wb_cp0_reg_waddr <= 5'b00000;
+            wb_cp0_reg_wdata <= `ZeroWord;
+        end else if(flush == 1'b1) begin
             wb_wd    <= `NOPRegAddr;
             wb_wdata <= `ZeroWord;
             wb_wreg  <= `WriteDisable;

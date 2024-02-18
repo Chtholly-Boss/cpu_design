@@ -61,12 +61,26 @@ module ex (input wire rst,
            
            output reg cp0_reg_we_o,
            output reg [4:0] cp0_reg_waddr_o,
-           output reg [31:0] cp0_reg_wdata_o);
+           output reg [31:0] cp0_reg_wdata_o,
+           
+           input  wire [31:0] excepttype_i,
+           input  wire [31:0] current_inst_addr_i,
+           
+           output wire [31:0] excepttype_o,
+           output wire is_in_delayslot_o,
+           output wire [31:0] current_inst_addr_o);
     /*** Definition ***/
     reg[`RegBus] HI;
     reg[`RegBus] LO;
     
     assign aluop_o = aluop_i;
+
+    reg trapassert;
+    reg ovassert;
+
+    assign excepttype_o = {excepttype_i[31:12],ovassert,trapassert,excepttype_i[9:8],8'h00};
+    assign is_in_delayslot_o = is_in_delayslot_i;
+    assign current_inst_addr_o = current_inst_addr_i;
     /*** Check if Memory Access and Write Back would change HI/LO ***/
     always @(*) begin
         if (rst == `RstEnable) begin
@@ -166,7 +180,6 @@ module ex (input wire rst,
         end
     end
     
-    /*** Compute Arithmetic Results Based on aluop ***/
     reg [`RegBus] arithmeticres;
     wire          ov_sum;
     
@@ -179,7 +192,11 @@ module ex (input wire rst,
     assign reg2_i_mux = ((aluop_i == `EXE_SUB_OP) ||
     (aluop_i == `EXE_SUBU_OP) ||
     (aluop_i == `EXE_SLT_OP) ||
-    (aluop_i == `EXE_SLTI_OP)) ?
+    (aluop_i == `EXE_SLTI_OP) ||
+    (aluop_i == `EXE_TLT_OP) ||
+    (aluop_i == `EXE_TLTI_OP) ||
+    (aluop_i == `EXE_TGE_OP) ||
+    (aluop_i == `EXE_TGEI_OP)) ?
     (~reg2_i) + 1 : reg2_i;
     
     assign result_sum = reg1_i + reg2_i_mux;
@@ -190,14 +207,65 @@ module ex (input wire rst,
     );
     
     assign reg1_lt_reg2 = (
-    (aluop_i == `EXE_SLT_OP) || (aluop_i == `EXE_SLTI_OP)
+    (aluop_i == `EXE_SLT_OP) ||
+    (aluop_i == `EXE_SLTI_OP) ||
+    (aluop_i == `EXE_TLT_OP) ||
+    (aluop_i == `EXE_TLTI_OP) ||
+    (aluop_i == `EXE_TGE_OP) ||
+    (aluop_i == `EXE_TGEI_OP)
     ) ? (
     (reg1_i[31] & ~reg2_i[31]) ||
     (reg1_i[31] & reg2_i[31] & result_sum[31]) ||
-    (~reg1_i[31] & ~reg2_i[31] & result_sum)) : (reg1_i < reg2_i);
+    (~reg1_i[31] & ~reg2_i[31] & result_sum[31])) : (reg1_i < reg2_i);
     
     assign reg1_i_not = ~reg1_i;
-    
+    /*** Exception Judgement ***/
+    always @( *) begin
+        if (rst == `RstEnable) begin
+            trapassert <= `TrapAssert;
+        end else begin
+            trapassert <= `TrapNotAssert;
+            case (aluop_i)
+                `EXE_TEQ_OP,`EXE_TEQI_OP:begin
+                    if (reg1_i == reg2_i) begin
+                        trapassert = `TrapAssert;
+                    end
+                end
+                `EXE_TGE_OP,`EXE_TGEI_OP,`EXE_TGEU_OP,`EXE_TGEIU_OP:begin
+                    if (~reg1_lt_reg2) begin
+                        trapassert = `TrapAssert;
+                    end
+                end
+                `EXE_TLT_OP,`EXE_TLTI_OP,`EXE_TLTU_OP,`EXE_TLTIU_OP:begin
+                    if (reg1_lt_reg2) begin
+                        trapassert = `TrapAssert;
+                    end
+                end
+                `EXE_TNE_OP,`EXE_TNEI_OP:begin
+                    if (reg1_i != reg2_i) begin
+                        trapassert = `TrapAssert;
+                    end
+                end
+                default begin
+                   trapassert <= `TrapNotAssert; 
+                end
+            endcase
+        end
+    end
+
+    always @( *) begin
+        if (((aluop_i == `EXE_ADD_OP) ||
+        (aluop_i == `EXE_ADDI_OP) ||
+        (aluop_i == `EXE_SUB_OP)) &&
+        (ov_sum == 1'b1)) begin
+            wreg_o <= `WriteDisable;
+            ovassert <= 1'b1;
+        end else begin
+            wreg_o <= wreg_i;
+            ovassert <= 1'b0;
+        end
+    end
+    /*** Compute Arithmetic Results Based on aluop ***/
     always @(*) begin
         if (rst == `RstEnable) begin
             arithmeticres <= `ZeroWord;
